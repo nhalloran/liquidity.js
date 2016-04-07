@@ -7,6 +7,8 @@ var CircleMaterial = function(params){
 
   var color = (params.color) ? params.color : 0xffffff;
 
+  var indivColors = !!params.indivColors;
+
 
   var uniforms = {
 
@@ -27,11 +29,22 @@ var CircleMaterial = function(params){
 
 			"#define SDF",
 
+      (indivColors) ? "#define COLORS" : "",
+
+
+
       "varying vec2 vUv;",
+      '#ifdef COLORS',
+      " attribute vec3 colors;",
+      " varying vec3 vColor;",
+      '#endif',
 
   		"void main() {",
 
   		"vUv = uv;",
+      '#ifdef COLORS',
+      " vColor = colors;",
+      '#endif',
   		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
 
   		"}"
@@ -41,11 +54,21 @@ var CircleMaterial = function(params){
 
     var fragmentShader =  [
 
+      (indivColors) ? "#define COLORS" : "",
+
+
 			"uniform vec3 color;",
       "uniform sampler2D map;",
       "uniform float epsilon;",
       "uniform float opacity;",
       "varying vec2 vUv;",
+      '#ifdef COLORS',
+      " varying vec3 vColor;",
+      '#endif',
+
+
+
+
 
 			"void main() {",
 
@@ -63,7 +86,12 @@ var CircleMaterial = function(params){
     //  '       w = 0.02; ',
       '       float sdfa = smoothstep( 0.25, 0.25 -w, r2);',
       '				if (sdfa < 0.01) discard;',
+      '				#ifdef COLORS',
+      '				gl_FragColor = vec4( vColor, opacity * sdfa);',
+      '				#else',
       '				gl_FragColor = vec4( color, opacity * sdfa);',
+      '				#endif',
+
 
       //
 

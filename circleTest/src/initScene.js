@@ -3,7 +3,18 @@ var d3 = require('d3');
 var CircleMaterial = require('./neilviz/CircleMaterial');
 var BufferedPlanesGeometry = require('./neilviz/BufferedPlanesGeometry');
 
-var data = require('./data/phillyBudgetDeptAndCat');
+var depts = require('./data/phillyBudgetDeptAndCat');
+var cats = require('./data/cats');
+
+var catsById = {};
+cats.forEach(function(cat,i){
+  cat.x = -500 + 200 * i;
+  cat.colorObj = new THREE.Color(cat.color);
+  cat.depts = [];
+  catsById[cat.id] = cat;
+
+});
+
 
 var camera, scene, renderer;
 var mesh;
@@ -16,7 +27,7 @@ function init() {
   camera.position.z = 400;
   scene = new THREE.Scene();
 
-  var redMat= new CircleMaterial({color:0xff0000});
+  var circleMat= new CircleMaterial({color:0xff0000, indivColors:true});
 
 
 
@@ -24,29 +35,44 @@ function init() {
     height = 500;
 
 
-cats = [];
 var ysum = 0;
 
 var nodes = [];
 
 var dotValue = 5000000;
 var totalDots = 0;
-data.forEach(function(item, i){
-  var dots = Math.round(item.t/dotValue);
+depts.forEach(function(dept, i){
+  var cat = catsById[dept.c] || catsById.other;
+  dept.cat = cat;
+  cat.depts.push(dept);
+
+  var dots = Math.round(dept.t/dotValue);
   totalDots += dots;
-  var col = i % 10;
-  var row = Math.floor(i/10);
-  item.foci =  { x: -500 + col * 100,  y:-300 + row * 100};
+  //var col = i % 10;
+  //var row = Math.floor(i/10);
+
+});
+
+cats.forEach(function(cat){
+  cat.depts.sort(function(a,b){
+    return b.t - a.t;
+  });
+  yC = 100;
+  cat.depts.forEach(function(dept){
+    dept.foci =  { x: cat.x,  y:yC};
+    yC -=  Math.sqrt(dept.t) * 0.004;
+
+  });
 });
 
 
-var circleGeo = new BufferedPlanesGeometry({count:totalDots});
+var circleGeo = new BufferedPlanesGeometry({count:totalDots, indivColors:true});
 
 
 
 var dotIndex = 0;
-data.forEach(function(item, i){
-  var count = Math.round(item.t/dotValue);
+depts.forEach(function(dept, i){
+  var count = Math.round(dept.t/dotValue);
 
   for (var j = 0; j < count; j ++){
 
@@ -61,10 +87,12 @@ data.forEach(function(item, i){
 
   nodes.push(node);
 
+
   var geo = new THREE.PlaneBufferGeometry(1,1);
 
   circleGeo.merge(geo,dotIndex * 4);
   circleGeo.mergeIndex(geo,dotIndex);
+  circleGeo.setSingleColor(dotIndex, dept.cat.colorObj);
 
   dotIndex++;
 
@@ -79,6 +107,8 @@ var force = d3.layout.force()
     .nodes(nodes)
     .links([])
     .gravity(0)
+    .charge(-85)
+    //.theta(0.2)
     .chargeDistance(dotRadius)
     .size([width, height])
     .on("tick", tick);
@@ -91,7 +121,7 @@ var force = d3.layout.force()
 
       // Push nodes toward their designated focus.
       nodes.forEach(function(o, i) {
-        var foci = data[o.ci].foci;
+        var foci = depts[o.ci].foci;
         o.y += (foci.y - o.y) * k;
         o.x += (foci.x - o.x) * k;
       });
@@ -105,7 +135,7 @@ var force = d3.layout.force()
     }
 
 
-  var circles= new THREE.Mesh(circleGeo,redMat);
+  var circles= new THREE.Mesh(circleGeo,circleMat);
   scene.add(circles);
 
   force.start();
@@ -115,6 +145,7 @@ var force = d3.layout.force()
   renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor( 0xffffff, 1);
   document.body.appendChild(renderer.domElement);
   //
   window.addEventListener('resize', onWindowResize, false);
