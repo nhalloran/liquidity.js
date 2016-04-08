@@ -1,12 +1,10 @@
 var THREE = require('three');
+var TWEEN = require('tween.js');
 var d3 = require('d3');
 var CircleMaterial = require('./neilviz/CircleMaterial');
 var BufferedPlanesGeometry = require('./neilviz/BufferedPlanesGeometry');
 
-
-
 var model = require('./model');
-
 var states = require('./states');
 
 var catsById = model.catsById;
@@ -17,13 +15,13 @@ var nodes = model.nodes;
 var cats = model.cats;
 
 
-
-
-
 var camera, scene, renderer;
 var mesh;
 
 var dotRadius = 10;
+
+var transState = {t:0};
+var transTween;
 
 
 function init() {
@@ -39,22 +37,16 @@ function init() {
   var width = 960,
     height = 500;
 
-
   var ysum = 0;
 
 
 
-
-  states.deptByCat.nodes.forEach(function(sNode){
-    nodes[sNode.nid].foci = sNode.foci;
-  });
 
 
   var circleGeo = new BufferedPlanesGeometry({
     count: totalDots,
     indivColors: true
   });
-
 
 
   var dotIndex = 0;
@@ -81,7 +73,8 @@ function init() {
     .nodes(nodes)
     .links([])
     .gravity(0)
-    .charge(-85)
+
+    .charge(-80)
     //.theta(0.2)
     .chargeDistance(dotRadius)
     .size([width, height])
@@ -90,14 +83,20 @@ function init() {
   function tick(e) {
     var k = 0.1 * e.alpha;
 
+    //force.charge(function(node) {
+    //   return (node.nid/nodes.length < transState.t) ? -80 : 0;
+    //});
+
 
 
 
     // Push nodes toward their designated focus.
     nodes.forEach(function(o, i) {
-      var foci = o.foci;
-      o.y += (foci.y - o.y) * k;
-      o.x += (foci.x - o.x) * k;
+      if(i/nodes.length < transState.t){
+        var foci = o.foci;
+        o.y += (foci.y - o.y) * k;
+        o.x += (foci.x - o.x) * k;
+      }
     });
 
 
@@ -123,7 +122,38 @@ function init() {
   document.body.appendChild(renderer.domElement);
   //
   window.addEventListener('resize', onWindowResize, false);
+
+
+  function goToState(sid){
+    states[sid].nodes.forEach(function(sNode){
+      nodes[sNode.nid].foci = sNode.foci;
+    });
+    transState.t = 0;
+    transTween = new TWEEN.Tween(transState)
+     .to({t:1},1200)
+     .start();
+    force.start();
+
+  }
+  var stateIds = Object.keys(states);
+  var curStateNum = 0;
+  function nextState(){
+    curStateNum = (curStateNum + 1) % stateIds.length;
+    goToState(stateIds[curStateNum]);
+
+  }
+
+  goToState('wholeCity');
+//wholeCity
+//deptByCat
+
+  renderer.domElement.onclick = function(){
+    nextState();
+  };
 }
+
+
+
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -133,12 +163,11 @@ function onWindowResize() {
 
 function animate() {
   requestAnimationFrame(animate);
+  TWEEN.update();
   renderer.render(scene, camera);
 }
 
 module.exports = {
   init: init,
   animate: animate,
-
-
-}
+};

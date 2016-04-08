@@ -38,6 +38,7 @@ depts.forEach(function(dept, did) {
       x: Math.random() * 1000 - 500,
       y: Math.random() * 1000 - 500,
       z: 0,
+      nid: nodes.length,
       did: did
     };
     nodes.push(node);

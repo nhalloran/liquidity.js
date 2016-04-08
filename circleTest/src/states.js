@@ -15,39 +15,61 @@ var states = {};
 //   make each state...
 // *********************
 
-
-
-
-states.deptByCat = function(){
+states.wholeCity = function() {
   // state
-var state = {
-  focis: [],
-  nodes: []
-};
+  var foci = {x: 0,y: 0};
+  var state = {
+    focis: [foci],
+    nodes: []
+  };
 
-var deptFoci = []; //for this state, assigns a foci to each dept
-
-cats.forEach(function(cat){
-  cat.depts.sort(function(a,b){
-    return b.t - a.t;
+  nodes.forEach(function(node,i){
+    state.nodes.push({
+      foci:foci,
+      nid: i,
+    });
   });
-  yC = 100;
-  cat.depts.forEach(function(dept){
-    var foci = { x: cat.x,  y:yC};
-    state.focis.push(foci);
-    deptFoci[dept.did] = foci;
-    yC -=  Math.sqrt(dept.t) * 0.004;
-  });
-});
 
-nodes.forEach(function(node,i){
-  state.nodes.push({
-    nid: i,
-    foci: deptFoci[node.did]
-  });
-});
+  return state;
 
-return state;
+}();
+
+
+
+
+states.deptByCat = function() {
+  // state
+  var state = {
+    focis: [],
+    nodes: []
+  };
+
+  var deptFoci = []; //for this state, assigns a foci to each dept
+
+  cats.forEach(function(cat) {
+    cat.depts.sort(function(a, b) {
+      return b.t - a.t;
+    });
+    yC = 100;
+    cat.depts.forEach(function(dept) {
+      var foci = {
+        x: cat.x,
+        y: yC
+      };
+      state.focis.push(foci);
+      deptFoci[dept.did] = foci;
+      yC -= Math.sqrt(dept.t) * 0.004;
+    });
+  });
+
+  nodes.forEach(function(node, i) {
+    state.nodes.push({
+      nid: i,
+      foci: deptFoci[node.did]
+    });
+  });
+
+  return state;
 }();
 
 
