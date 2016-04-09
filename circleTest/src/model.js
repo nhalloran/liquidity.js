@@ -8,6 +8,8 @@ cats.forEach(function(cat, i) {
   cat.x = -500 + 200 * i;
   cat.colorObj = new THREE.Color(cat.color);
   cat.depts = [];
+  cat.cid = i;
+  cat.t = 0;
   catsById[cat.id] = cat;
 
 });
@@ -15,14 +17,17 @@ cats.forEach(function(cat, i) {
 
 var dotValue = 5000000;
 var totalDots = 0;
+var totalBudget = 0;
 depts.forEach(function(dept, i) {
   var cat = catsById[dept.c] || catsById.other;
   dept.cat = cat;
   dept.did = i; //for fast lookup
   cat.depts.push(dept);
+  cat.t += dept.t;
 
   var dots = Math.round(dept.t / dotValue);
   totalDots += dots;
+  totalBudget += dept.t;
   //var col = i % 10;
   //var row = Math.floor(i/10);
 
@@ -53,6 +58,7 @@ module.exports = {
   depts: depts,
   totalDots: totalDots,
   dotValue: dotValue,
-  nodes: nodes
+  nodes: nodes,
+  totalBudget: totalBudget,
 
 };

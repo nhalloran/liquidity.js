@@ -17,7 +17,11 @@ var states = {};
 
 states.wholeCity = function() {
   // state
-  var foci = {x: 0,y: 0};
+  var foci = {
+    x: 0,
+    y: 0,
+    distSq: model.totalBudget * 0.0000035
+  };
   var state = {
     focis: [foci],
     nodes: []
@@ -54,11 +58,13 @@ states.deptByCat = function() {
     cat.depts.forEach(function(dept) {
       var foci = {
         x: cat.x,
-        y: yC
+        y: yC,
+        distSq: dept.t * 0.0000035
+
       };
       state.focis.push(foci);
       deptFoci[dept.did] = foci;
-      yC -= Math.sqrt(dept.t) * 0.004;
+      yC -= Math.sqrt(dept.t) * 0.0035 + 30;
     });
   });
 
@@ -66,6 +72,37 @@ states.deptByCat = function() {
     state.nodes.push({
       nid: i,
       foci: deptFoci[node.did]
+    });
+  });
+
+  return state;
+}();
+
+states.catTotals = function() {
+  // state
+  var state = {
+    focis: [],
+    nodes: []
+  };
+
+  var catFoci = []; //for this state, assigns a foci to each dept
+
+  cats.forEach(function(cat) {
+
+    var foci = {
+        x: cat.x,
+        y: 10,
+        distSq: cat.t * 0.0000035
+
+      };
+      state.focis.push(foci);
+      catFoci[cat.cid] = foci;
+  });
+
+  nodes.forEach(function(node, i) {
+    state.nodes.push({
+      nid: i,
+      foci: catFoci[depts[node.did].cat.cid]
     });
   });
 

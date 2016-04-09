@@ -76,7 +76,7 @@ function init() {
 
     .charge(-80)
     //.theta(0.2)
-    .chargeDistance(dotRadius)
+    .chargeDistance(dotRadius * 0.8)
     .size([width, height])
     .on("tick", tick);
 
@@ -94,8 +94,10 @@ function init() {
     nodes.forEach(function(o, i) {
       if(i/nodes.length < transState.t){
         var foci = o.foci;
-        o.y += (foci.y - o.y) * k;
-        o.x += (foci.x - o.x) * k;
+        var distSq = (foci.y - o.y) * (foci.y - o.y) + (foci.x - o.x) * (foci.x - o.x);
+        var antidense = (distSq > foci.distSq) ? 1 : 0.1;
+        o.y += (foci.y - o.y) * k * antidense;
+        o.x += (foci.x - o.x) * k * antidense;
       }
     });
 
