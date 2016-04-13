@@ -4,8 +4,15 @@ var d3 = require('d3');
 var CircleMaterial = require('./neilviz/CircleMaterial');
 var BufferedPlanesGeometry = require('./neilviz/BufferedPlanesGeometry');
 
+var blobTest = require('./blobTest');
+var config = require('./config');
+
+//replace these
+
+
 var model = require('./model');
 var states = require('./states');
+var textItems = require('./textItems');
 
 var catsById = model.catsById;
 var depts = model.depts;
@@ -14,20 +21,31 @@ var totalDots = model.totalDots;
 var nodes = model.nodes;
 var cats = model.cats;
 
+var time = 0;
+var clock = new THREE.Clock();
 
 var camera, scene, renderer;
 var mesh;
 
-var dotRadius = 10;
+var dotRadius = config.dotRadius;
+var showCircles = config.showCircles;
+var showMetaBalls = config.showMetaBalls;
 
 var transState = {t:0};
+var currentState = 0;
 var transTween;
 
 
 function init() {
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
   camera.position.z = 400;
+
+
   scene = new THREE.Scene();
+
+  var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+  directionalLight.position.set( 0.3, -1, 2 );
+  scene.add( directionalLight );
 
   var circleMat = new CircleMaterial({
     color: 0xff0000,
@@ -65,10 +83,7 @@ function init() {
 
   });
 
-  var foci = {
-    x: 0,
-    y: 0
-  };
+
   var force = d3.layout.force()
     .nodes(nodes)
     .links([])
@@ -92,13 +107,13 @@ function init() {
 
     // Push nodes toward their designated focus.
     nodes.forEach(function(o, i) {
-      if(i/nodes.length < transState.t){
+      //if(i/nodes.length < transState.t){
         var foci = o.foci;
         var distSq = (foci.y - o.y) * (foci.y - o.y) + (foci.x - o.x) * (foci.x - o.x);
         var antidense = (distSq > foci.distSq) ? 1 : 0.1;
         o.y += (foci.y - o.y) * k * antidense;
         o.x += (foci.x - o.x) * k * antidense;
-      }
+      //}
     });
 
 
@@ -113,28 +128,89 @@ function init() {
   var circles = new THREE.Mesh(circleGeo, circleMat);
   scene.add(circles);
 
+  if (showMetaBalls)
+    scene.add(blobTest);
+
+
+
+
+
   force.start();
+
+
+ Object.keys(textItems).forEach(function(key){
+   textItems[key].position.z = 3;
+   scene.add(textItems[key]);
+   textItems[key].updateMatrix();
+ });
+
+ window.textItems = textItems;
 
 
 
   renderer = new THREE.WebGLRenderer();
+//  renderer.autoClear = false;
+
+  renderer.gammaInput = true;
+	renderer.gammaOutput = true;
+	renderer.physicallyBasedShading = true;
+
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0xffffff, 1);
+
   document.body.appendChild(renderer.domElement);
   //
   window.addEventListener('resize', onWindowResize, false);
 
-
-  function goToState(sid){
-    states[sid].nodes.forEach(function(sNode){
-      nodes[sNode.nid].foci = sNode.foci;
+  var maybeHide = function(item){
+    //used for tween on opacity
+    return function(){
+      item.visible = (this.value > 0);
+    };
+  };
+  var textKeys = Object.keys(textItems);
+  function transStateUpdate(){
+    //TODO: add sort order to state
+    var ts = this;
+    nodes.forEach(function(node,i){
+      node.foci = (i/nodes.length > ts.t) ? states[ts.prev].nodes[i].foci
+        : states[ts.next].nodes[i].foci;
     });
+  }
+  function goToState(sid){
+
+
+
+    transState.prev = currentState; //previous state
+    transState.next = sid; // next state
+    currentState = sid;
+
+
     transState.t = 0;
     transTween = new TWEEN.Tween(transState)
+     .onUpdate(transStateUpdate)
+     //.onComplete(transStateUpdate)
      .to({t:1},1200)
      .start();
     force.start();
+    textKeys.forEach(function(key){
+      item = textItems[key];
+      item.material.uniforms.opacity.value = 0;
+      var isDept = (key.substring(0,5) === 'dept_');
+      var isCat = (key.substring(0,4) === 'cat_');
+      if(sid === 'deptByCat' && isDept){
+        new TWEEN.Tween(item.material.uniforms.opacity).to({value:1},500).delay(1100).onUpdate(maybeHide(item)).start();
+      }
+      if(sid === 'catTotals' && isCat){
+        new TWEEN.Tween(item.material.uniforms.opacity).to({value:1},500).delay(1100).onUpdate(maybeHide(item)).start();
+      }
+      if(sid === 'wholeCity' && !isCat && !isDept){
+        new TWEEN.Tween(item.material.uniforms.opacity).to({value:1},500).delay(1100).onUpdate(maybeHide(item)).start();
+      }
+
+    });
+
 
   }
   var stateIds = Object.keys(states);
@@ -144,7 +220,7 @@ function init() {
     goToState(stateIds[curStateNum]);
 
   }
-
+  currentState = 'wholeCity';
   goToState('wholeCity');
 //wholeCity
 //deptByCat
@@ -166,6 +242,10 @@ function onWindowResize() {
 function animate() {
   requestAnimationFrame(animate);
   TWEEN.update();
+//  var delta = clock.getDelta();
+//	time += delta * 0.5;
+  if (showMetaBalls)
+    blobTest.update(nodes);
   renderer.render(scene, camera);
 }
 

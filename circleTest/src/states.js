@@ -8,6 +8,9 @@ var totalDots = model.totalDots;
 var nodes = model.nodes;
 
 
+var textItems = require('./textItems');
+
+
 var states = {};
 
 
@@ -62,6 +65,15 @@ states.deptByCat = function() {
         distSq: dept.t * 0.0000035
 
       };
+      //temp
+      if (textItems['dept_t_' + dept.did]){
+        textItems['dept_t_' + dept.did].position.x = cat.x;
+        textItems['dept_t_' + dept.did].position.y = yC;
+        textItems['dept_n_' + dept.did].position.x = cat.x;
+        textItems['dept_n_' + dept.did].position.y = yC;
+
+      }
+
       state.focis.push(foci);
       deptFoci[dept.did] = foci;
       yC -= Math.sqrt(dept.t) * 0.0035 + 30;
@@ -97,6 +109,15 @@ states.catTotals = function() {
       };
       state.focis.push(foci);
       catFoci[cat.cid] = foci;
+
+      //temp
+      if (textItems['cat_t_' + cat.cid]){
+        textItems['cat_t_' + cat.cid].position.x = cat.x;
+        textItems['cat_t_' + cat.cid].position.y = 10;
+        textItems['cat_n_' + cat.cid].position.x = cat.x;
+        textItems['cat_n_' + cat.cid].position.y = 10;
+
+      }
   });
 
   nodes.forEach(function(node, i) {
