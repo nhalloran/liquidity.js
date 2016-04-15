@@ -7,6 +7,18 @@ var dotValue = model.dotValue;
 var totalDots = model.totalDots;
 var nodes = model.nodes;
 
+//TODO: move to util file
+function hexToRgbArray(hex) {
+  hex = Math.floor( hex );
+
+  return [
+        ( hex >> 16 & 255 ) / 255,
+        ( hex >> 8 & 255 ) / 255,
+        ( hex & 255 ) / 255
+    ];
+
+}
+
 
 var textItems = require('./textItems');
 
@@ -15,7 +27,14 @@ var states = {};
 
 
 // *********************
-//   make each state...
+//   Make each state...
+//   Every state has:
+//      1)  array of focis (points where balls gravitate towards)
+//      2)  array of nodes, that correspond to balls and indicate which foci they are linked to
+//      3)  array of text objects that
+//   It's probably a good idea to makes states immutable, meaning they don't include functions
+//   or refernces to other objects, which is why the nodes refernce the focis by numeric id
+//   not actual refernces.
 // *********************
 
 states.wholeCity = function() {
@@ -34,6 +53,7 @@ states.wholeCity = function() {
     state.nodes.push({
       foci:foci,
       nid: i,
+      color: hexToRgbArray(0x333333)
     });
   });
 
@@ -83,7 +103,8 @@ states.deptByCat = function() {
   nodes.forEach(function(node, i) {
     state.nodes.push({
       nid: i,
-      foci: deptFoci[node.did]
+      foci: deptFoci[node.did],
+      color: hexToRgbArray(depts[node.did].cat.color)
     });
   });
 
@@ -123,7 +144,8 @@ states.catTotals = function() {
   nodes.forEach(function(node, i) {
     state.nodes.push({
       nid: i,
-      foci: catFoci[depts[node.did].cat.cid]
+      foci: catFoci[depts[node.did].cat.cid],
+      color: hexToRgbArray(depts[node.did].cat.color)
     });
   });
 

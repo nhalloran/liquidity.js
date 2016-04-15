@@ -24,6 +24,13 @@ var BufferedPlanesGeometry = function(params) {
   var uvs = new Float32Array(this.verticesPerPlane * this.count * 2);
   var indices = new((vertices.length / 3) > 65535 ? Uint32Array : Uint16Array)(this.indicesPerPlane * this.count);
 
+  var ti = BufferedPlanesGeometry.indexTemplate;
+  for (var c=0; c < this.count; c++){
+    for (i = 0, j = this.indicesPerPlane * c; i < this.indicesPerPlane; i++, j++) {
+      indices[j] = ti[i] + this.verticesPerPlane * c;
+    }
+  }
+
 
   this.setIndex(new THREE.BufferAttribute(indices, 1));
   this.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
@@ -32,7 +39,7 @@ var BufferedPlanesGeometry = function(params) {
 
   if (this.indivColors) {
     var colors = new Float32Array(this.verticesPerPlane * this.count * 3);
-    this.addAttribute('colors', new THREE.BufferAttribute(vertices, 3));
+    this.addAttribute('colors', new THREE.BufferAttribute(colors, 3));
   }
 
 };
@@ -60,7 +67,7 @@ BufferedPlanesGeometry.prototype.mergeIndex = function(geometry, offset) {
 
 BufferedPlanesGeometry.prototype.renderSinglePositions = function(index, center, size) {
   //TODO: make size allow a abject array to specify width+ height
-  var t = BufferedPlanesGeometry.positionsTemplat;
+  var t = BufferedPlanesGeometry.positionsTemplate;
   var c = [center.x || 0, center.y || 0, center.z || 0];
   var i, j;
 
@@ -71,6 +78,25 @@ BufferedPlanesGeometry.prototype.renderSinglePositions = function(index, center,
     vertices[j * 3 + 1] = t[i * 3 + 1] * size + center.y;
     vertices[j * 3 + 2] = t[i * 3 + 2] * size + center.z;
   }
+
+  this.attributes.position.needsUpdate = true;
+
+
+
+};
+BufferedPlanesGeometry.prototype.renderSinglePositionAndScale = function(index, x,y,z, w,h,d) {
+  //TODO: make size allow a abject array to specify width+ height
+  var t = BufferedPlanesGeometry.positionsTemplate;
+  var i, j;
+
+  var vertices = this.attributes.position.array;
+
+  for (i = 0, j = this.verticesPerPlane * index; i < this.verticesPerPlane; i++, j++) {
+    vertices[j * 3 + 0] = t[i * 3 + 0] * w + x;
+    vertices[j * 3 + 1] = t[i * 3 + 1] * h + y;
+  //  vertices[j * 3 + 2] = t[i * 3 + 2] * d + z;
+  }
+
 
   this.attributes.position.needsUpdate = true;
 
@@ -92,12 +118,12 @@ BufferedPlanesGeometry.prototype.setSingleColor = function(index, color) {
     this.attributes.colors.needsUpdate = true;
 
   }
-  this.attributes.colors.needsUpdate = true;
 
 };
 
 
 
-BufferedPlanesGeometry.positionsTemplat = [-0.5, 0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0];
+BufferedPlanesGeometry.positionsTemplate = [-0.5, 0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0];
+BufferedPlanesGeometry.indexTemplate = [0, 2, 1, 2, 3, 1];
 
 module.exports = BufferedPlanesGeometry;

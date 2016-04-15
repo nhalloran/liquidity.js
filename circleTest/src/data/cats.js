@@ -20,6 +20,19 @@ module.exports = [
   color: 0xb8aa95
 },
 {
+  id: "money",
+  name: "Money Matters",
+  color: 0x5fa482
+},
+/*
+{
+  id: "artCulture",
+  name: "Art & Culture",
+  color: 0xb0b0b0
+},
+*/
+
+{
   id: "other",
   name: "Other / Misc",
   color: 0xb0b0b0

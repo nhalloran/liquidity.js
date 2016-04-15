@@ -3,6 +3,7 @@ var TWEEN = require('tween.js');
 var d3 = require('d3');
 var CircleMaterial = require('./neilviz/CircleMaterial');
 var BufferedPlanesGeometry = require('./neilviz/BufferedPlanesGeometry');
+var mix = require('./neilviz/util/mix');
 
 var blobTest = require('./blobTest');
 var config = require('./config');
@@ -110,7 +111,9 @@ function init() {
       //if(i/nodes.length < transState.t){
         var foci = o.foci;
         var distSq = (foci.y - o.y) * (foci.y - o.y) + (foci.x - o.x) * (foci.x - o.x);
-        var antidense = (distSq > foci.distSq) ? 1 : 0.1;
+        //less than 20,000 should start to taper
+        var innerPull = 0.1 * Math.max(0,Math.min(1,(15 - foci.distSq/1000)));
+        var antidense = (distSq > foci.distSq) ? 1 : innerPull;
         o.y += (foci.y - o.y) * k * antidense;
         o.x += (foci.x - o.x) * k * antidense;
       //}
@@ -173,9 +176,20 @@ function init() {
   function transStateUpdate(){
     //TODO: add sort order to state
     var ts = this;
+    var colorT = Math.max(0,ts.t * 2 - 1);
     nodes.forEach(function(node,i){
-      node.foci = (i/nodes.length > ts.t) ? states[ts.prev].nodes[i].foci
-        : states[ts.next].nodes[i].foci;
+      var pNode = states[ts.prev].nodes[i];
+      var nNode = states[ts.next].nodes[i];
+
+
+      node.foci = (i/nodes.length > ts.t) ? pNode.foci
+        : nNode.foci;
+      circleGeo.setSingleColor(i,{
+        r: mix(pNode.color[0],nNode.color[0],colorT),
+        g: mix(pNode.color[1],nNode.color[1],colorT),
+        b: mix(pNode.color[2],nNode.color[2],colorT)
+      });
+
     });
   }
   function goToState(sid){

@@ -22,6 +22,7 @@ depts.forEach(function(dept, i) {
   var cat = catsById[dept.c] || catsById.other;
   dept.cat = cat;
   dept.did = i; //for fast lookup
+  dept.dn = dept.sn || dept.n, //display name: short name if avail
   cat.depts.push(dept);
   cat.t += dept.t;
 
@@ -50,6 +51,13 @@ depts.forEach(function(dept, did) {
   }
 });
 
+function sortScore(node){
+  var dept = depts[node.did];
+  return dept.cat.x * 100000000 - dept.t;
+}
+nodes.sort(function(a,b){
+  return sortScore(a) - sortScore(b);
+});
 
 
 module.exports = {

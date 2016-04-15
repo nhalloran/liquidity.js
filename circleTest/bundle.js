@@ -61,126 +61,253 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var THREE = __webpack_require__(/*! three */ 2);
-	var d3 = __webpack_require__(/*! d3 */ 3);
-	var CircleMaterial = __webpack_require__(/*! ./neilviz/CircleMaterial */ 6);
-	var BufferedPlanesGeometry = __webpack_require__(/*! ./neilviz/BufferedPlanesGeometry */ 4);
+	var TWEEN = __webpack_require__(/*! tween.js */ 3);
+	var d3 = __webpack_require__(/*! d3 */ 4);
+	var CircleMaterial = __webpack_require__(/*! ./neilviz/CircleMaterial */ 5);
+	var BufferedPlanesGeometry = __webpack_require__(/*! ./neilviz/BufferedPlanesGeometry */ 7);
+	var mix = __webpack_require__(/*! ./neilviz/util/mix */ 8);
 	
-	var data = __webpack_require__(/*! ./data/phillyBudgetDeptAndCat */ 5);
+	var blobTest = __webpack_require__(/*! ./blobTest */ 9);
+	var config = __webpack_require__(/*! ./config */ 11);
+	
+	//replace these
+	
+	
+	var model = __webpack_require__(/*! ./model */ 12);
+	var states = __webpack_require__(/*! ./states */ 15);
+	var textItems = __webpack_require__(/*! ./textItems */ 16);
+	
+	var catsById = model.catsById;
+	var depts = model.depts;
+	var dotValue = model.dotValue;
+	var totalDots = model.totalDots;
+	var nodes = model.nodes;
+	var cats = model.cats;
+	
+	var time = 0;
+	var clock = new THREE.Clock();
 	
 	var camera, scene, renderer;
 	var mesh;
 	
-	var dotRadius = 10;
+	var dotRadius = config.dotRadius;
+	var showCircles = config.showCircles;
+	var showMetaBalls = config.showMetaBalls;
+	
+	var transState = {t:0};
+	var currentState = 0;
+	var transTween;
 	
 	
 	function init() {
-	  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+	  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
 	  camera.position.z = 400;
+	
+	
 	  scene = new THREE.Scene();
 	
-	  var redMat= new CircleMaterial({color:0xff0000});
+	  var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+	  directionalLight.position.set( 0.3, -1, 2 );
+	  scene.add( directionalLight );
 	
-	
+	  var circleMat = new CircleMaterial({
+	    color: 0xff0000,
+	    indivColors: true
+	  });
 	
 	  var width = 960,
 	    height = 500;
 	
-	
-	cats = [];
-	var ysum = 0;
-	
-	var nodes = [];
-	
-	var dotValue = 5000000;
-	var totalDots = 0;
-	data.forEach(function(item, i){
-	  var dots = Math.round(item.t/dotValue);
-	  totalDots += dots;
-	  var col = i % 10;
-	  var row = Math.floor(i/10);
-	  item.foci =  { x: -500 + col * 100,  y:-300 + row * 100};
-	});
-	
-	
-	var circleGeo = new BufferedPlanesGeometry({count:totalDots});
+	  var ysum = 0;
 	
 	
 	
-	var dotIndex = 0;
-	data.forEach(function(item, i){
-	  var count = Math.round(item.t/dotValue);
-	
-	  for (var j = 0; j < count; j ++){
-	
-	  //var radius = Math.sqrt(item.t) * 0.001;
-	
-	  var node = {
-	    x:Math.random() * 1000 - 500,
-	    y:Math.random() * 1000 - 500,
-	    z: 0,
-	    ci: i
-	  };
-	
-	  nodes.push(node);
-	
-	  var geo = new THREE.PlaneBufferGeometry(1,1);
-	
-	  circleGeo.merge(geo,dotIndex * 4);
-	  circleGeo.mergeIndex(geo,dotIndex);
-	
-	  dotIndex++;
-	
-	}
 	
 	
+	  var circleGeo = new BufferedPlanesGeometry({
+	    count: totalDots,
+	    indivColors: true
+	  });
 	
-	});
 	
-	var foci = {x:0,y:0};
-	var force = d3.layout.force()
+	  var dotIndex = 0;
+	  nodes.forEach(function(node) {
+	
+	
+	    var geo = new THREE.PlaneBufferGeometry(1, 1);
+	    var dept = depts[node.did];
+	
+	    circleGeo.merge(geo, dotIndex * 4);
+	    circleGeo.mergeIndex(geo, dotIndex);
+	    circleGeo.setSingleColor(dotIndex, dept.cat.colorObj);
+	
+	    dotIndex++;
+	
+	
+	  });
+	
+	
+	  var force = d3.layout.force()
 	    .nodes(nodes)
 	    .links([])
 	    .gravity(0)
-	    .chargeDistance(dotRadius)
+	
+	    .charge(-80)
+	    //.theta(0.2)
+	    .chargeDistance(dotRadius * 0.8)
 	    .size([width, height])
 	    .on("tick", tick);
 	
-	    function tick(e) {
-	      var k = 0.1 * e.alpha;
+	  function tick(e) {
+	    var k = 0.1 * e.alpha;
+	
+	    //force.charge(function(node) {
+	    //   return (node.nid/nodes.length < transState.t) ? -80 : 0;
+	    //});
 	
 	
 	
 	
-	      // Push nodes toward their designated focus.
-	      nodes.forEach(function(o, i) {
-	        var foci = data[o.ci].foci;
-	        o.y += (foci.y - o.y) * k;
-	        o.x += (foci.x - o.x) * k;
-	      });
+	    // Push nodes toward their designated focus.
+	    nodes.forEach(function(o, i) {
+	      //if(i/nodes.length < transState.t){
+	        var foci = o.foci;
+	        var distSq = (foci.y - o.y) * (foci.y - o.y) + (foci.x - o.x) * (foci.x - o.x);
+	        //less than 20,000 should start to taper
+	        var innerPull = 0.1 * Math.max(0,Math.min(1,(15 - foci.distSq/1000)));
+	        var antidense = (distSq > foci.distSq) ? 1 : innerPull;
+	        o.y += (foci.y - o.y) * k * antidense;
+	        o.x += (foci.x - o.x) * k * antidense;
+	      //}
+	    });
 	
 	
-	      nodes.forEach(function(node, i) {
-	        circleGeo.renderSinglePositions(i,node,dotRadius );
-	      });
+	    nodes.forEach(function(node, i) {
+	      circleGeo.renderSinglePositions(i, node, dotRadius);
+	    });
 	
 	
-	    }
+	  }
 	
 	
-	  var circles= new THREE.Mesh(circleGeo,redMat);
+	  var circles = new THREE.Mesh(circleGeo, circleMat);
 	  scene.add(circles);
+	
+	  if (showMetaBalls)
+	    scene.add(blobTest);
+	
+	
+	
+	
 	
 	  force.start();
 	
 	
+	 Object.keys(textItems).forEach(function(key){
+	   textItems[key].position.z = 3;
+	   scene.add(textItems[key]);
+	   textItems[key].updateMatrix();
+	 });
+	
+	 window.textItems = textItems;
+	
+	
 	
 	  renderer = new THREE.WebGLRenderer();
+	//  renderer.autoClear = false;
+	
+	  renderer.gammaInput = true;
+		renderer.gammaOutput = true;
+		renderer.physicallyBasedShading = true;
+	
 	  renderer.setPixelRatio(window.devicePixelRatio);
 	  renderer.setSize(window.innerWidth, window.innerHeight);
+	  renderer.setClearColor(0xffffff, 1);
+	
 	  document.body.appendChild(renderer.domElement);
 	  //
 	  window.addEventListener('resize', onWindowResize, false);
+	
+	  var maybeHide = function(item){
+	    //used for tween on opacity
+	    return function(){
+	      item.visible = (this.value > 0);
+	    };
+	  };
+	  var textKeys = Object.keys(textItems);
+	  function transStateUpdate(){
+	    //TODO: add sort order to state
+	    var ts = this;
+	    var colorT = Math.max(0,ts.t * 2 - 1);
+	    nodes.forEach(function(node,i){
+	      var pNode = states[ts.prev].nodes[i];
+	      var nNode = states[ts.next].nodes[i];
+	
+	
+	      node.foci = (i/nodes.length > ts.t) ? pNode.foci
+	        : nNode.foci;
+	      circleGeo.setSingleColor(i,{
+	        r: mix(pNode.color[0],nNode.color[0],colorT),
+	        g: mix(pNode.color[1],nNode.color[1],colorT),
+	        b: mix(pNode.color[2],nNode.color[2],colorT)
+	      });
+	
+	    });
+	  }
+	  function goToState(sid){
+	
+	
+	
+	    transState.prev = currentState; //previous state
+	    transState.next = sid; // next state
+	    currentState = sid;
+	
+	
+	    transState.t = 0;
+	    transTween = new TWEEN.Tween(transState)
+	     .onUpdate(transStateUpdate)
+	     //.onComplete(transStateUpdate)
+	     .to({t:1},1200)
+	     .start();
+	    force.start();
+	    textKeys.forEach(function(key){
+	      item = textItems[key];
+	      item.material.uniforms.opacity.value = 0;
+	      var isDept = (key.substring(0,5) === 'dept_');
+	      var isCat = (key.substring(0,4) === 'cat_');
+	      if(sid === 'deptByCat' && isDept){
+	        new TWEEN.Tween(item.material.uniforms.opacity).to({value:1},500).delay(1100).onUpdate(maybeHide(item)).start();
+	      }
+	      if(sid === 'catTotals' && isCat){
+	        new TWEEN.Tween(item.material.uniforms.opacity).to({value:1},500).delay(1100).onUpdate(maybeHide(item)).start();
+	      }
+	      if(sid === 'wholeCity' && !isCat && !isDept){
+	        new TWEEN.Tween(item.material.uniforms.opacity).to({value:1},500).delay(1100).onUpdate(maybeHide(item)).start();
+	      }
+	
+	    });
+	
+	
+	  }
+	  var stateIds = Object.keys(states);
+	  var curStateNum = 0;
+	  function nextState(){
+	    curStateNum = (curStateNum + 1) % stateIds.length;
+	    goToState(stateIds[curStateNum]);
+	
+	  }
+	  currentState = 'wholeCity';
+	  goToState('wholeCity');
+	//wholeCity
+	//deptByCat
+	
+	  renderer.domElement.onclick = function(){
+	    nextState();
+	  };
 	}
+	
+	
+	
 	
 	function onWindowResize() {
 	  camera.aspect = window.innerWidth / window.innerHeight;
@@ -190,15 +317,18 @@
 	
 	function animate() {
 	  requestAnimationFrame(animate);
+	  TWEEN.update();
+	//  var delta = clock.getDelta();
+	//	time += delta * 0.5;
+	  if (showMetaBalls)
+	    blobTest.update(nodes);
 	  renderer.render(scene, camera);
 	}
 	
 	module.exports = {
 	  init: init,
 	  animate: animate,
-	
-	
-	}
+	};
 
 
 /***/ },
@@ -40893,6 +41023,905 @@
 
 /***/ },
 /* 3 */
+/*!**********************************!*\
+  !*** ../~/tween.js/src/Tween.js ***!
+  \**********************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
+	 * Tween.js - Licensed under the MIT license
+	 * https://github.com/tweenjs/tween.js
+	 * ----------------------------------------------
+	 *
+	 * See https://github.com/tweenjs/tween.js/graphs/contributors for the full list of contributors.
+	 * Thank you all, you're awesome!
+	 */
+	
+	// Include a performance.now polyfill
+	(function () {
+	
+		if ('performance' in window === false) {
+			window.performance = {};
+		}
+	
+		// IE 8
+		Date.now = (Date.now || function () {
+			return new Date().getTime();
+		});
+	
+		if ('now' in window.performance === false) {
+			var offset = window.performance.timing && window.performance.timing.navigationStart ? window.performance.timing.navigationStart
+			                                                                                    : Date.now();
+	
+			window.performance.now = function () {
+				return Date.now() - offset;
+			};
+		}
+	
+	})();
+	
+	var TWEEN = TWEEN || (function () {
+	
+		var _tweens = [];
+	
+		return {
+	
+			getAll: function () {
+	
+				return _tweens;
+	
+			},
+	
+			removeAll: function () {
+	
+				_tweens = [];
+	
+			},
+	
+			add: function (tween) {
+	
+				_tweens.push(tween);
+	
+			},
+	
+			remove: function (tween) {
+	
+				var i = _tweens.indexOf(tween);
+	
+				if (i !== -1) {
+					_tweens.splice(i, 1);
+				}
+	
+			},
+	
+			update: function (time) {
+	
+				if (_tweens.length === 0) {
+					return false;
+				}
+	
+				var i = 0;
+	
+				time = time !== undefined ? time : window.performance.now();
+	
+				while (i < _tweens.length) {
+	
+					if (_tweens[i].update(time)) {
+						i++;
+					} else {
+						_tweens.splice(i, 1);
+					}
+	
+				}
+	
+				return true;
+	
+			}
+		};
+	
+	})();
+	
+	TWEEN.Tween = function (object) {
+	
+		var _object = object;
+		var _valuesStart = {};
+		var _valuesEnd = {};
+		var _valuesStartRepeat = {};
+		var _duration = 1000;
+		var _repeat = 0;
+		var _yoyo = false;
+		var _isPlaying = false;
+		var _reversed = false;
+		var _delayTime = 0;
+		var _startTime = null;
+		var _easingFunction = TWEEN.Easing.Linear.None;
+		var _interpolationFunction = TWEEN.Interpolation.Linear;
+		var _chainedTweens = [];
+		var _onStartCallback = null;
+		var _onStartCallbackFired = false;
+		var _onUpdateCallback = null;
+		var _onCompleteCallback = null;
+		var _onStopCallback = null;
+	
+		// Set all starting values present on the target object
+		for (var field in object) {
+			_valuesStart[field] = parseFloat(object[field], 10);
+		}
+	
+		this.to = function (properties, duration) {
+	
+			if (duration !== undefined) {
+				_duration = duration;
+			}
+	
+			_valuesEnd = properties;
+	
+			return this;
+	
+		};
+	
+		this.start = function (time) {
+	
+			TWEEN.add(this);
+	
+			_isPlaying = true;
+	
+			_onStartCallbackFired = false;
+	
+			_startTime = time !== undefined ? time : window.performance.now();
+			_startTime += _delayTime;
+	
+			for (var property in _valuesEnd) {
+	
+				// Check if an Array was provided as property value
+				if (_valuesEnd[property] instanceof Array) {
+	
+					if (_valuesEnd[property].length === 0) {
+						continue;
+					}
+	
+					// Create a local copy of the Array with the start value at the front
+					_valuesEnd[property] = [_object[property]].concat(_valuesEnd[property]);
+	
+				}
+	
+				// If `to()` specifies a property that doesn't exist in the source object,
+				// we should not set that property in the object
+				if (_valuesStart[property] === undefined) {
+					continue;
+				}
+	
+				_valuesStart[property] = _object[property];
+	
+				if ((_valuesStart[property] instanceof Array) === false) {
+					_valuesStart[property] *= 1.0; // Ensures we're using numbers, not strings
+				}
+	
+				_valuesStartRepeat[property] = _valuesStart[property] || 0;
+	
+			}
+	
+			return this;
+	
+		};
+	
+		this.stop = function () {
+	
+			if (!_isPlaying) {
+				return this;
+			}
+	
+			TWEEN.remove(this);
+			_isPlaying = false;
+	
+			if (_onStopCallback !== null) {
+				_onStopCallback.call(_object);
+			}
+	
+			this.stopChainedTweens();
+			return this;
+	
+		};
+	
+		this.stopChainedTweens = function () {
+	
+			for (var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i++) {
+				_chainedTweens[i].stop();
+			}
+	
+		};
+	
+		this.delay = function (amount) {
+	
+			_delayTime = amount;
+			return this;
+	
+		};
+	
+		this.repeat = function (times) {
+	
+			_repeat = times;
+			return this;
+	
+		};
+	
+		this.yoyo = function (yoyo) {
+	
+			_yoyo = yoyo;
+			return this;
+	
+		};
+	
+	
+		this.easing = function (easing) {
+	
+			_easingFunction = easing;
+			return this;
+	
+		};
+	
+		this.interpolation = function (interpolation) {
+	
+			_interpolationFunction = interpolation;
+			return this;
+	
+		};
+	
+		this.chain = function () {
+	
+			_chainedTweens = arguments;
+			return this;
+	
+		};
+	
+		this.onStart = function (callback) {
+	
+			_onStartCallback = callback;
+			return this;
+	
+		};
+	
+		this.onUpdate = function (callback) {
+	
+			_onUpdateCallback = callback;
+			return this;
+	
+		};
+	
+		this.onComplete = function (callback) {
+	
+			_onCompleteCallback = callback;
+			return this;
+	
+		};
+	
+		this.onStop = function (callback) {
+	
+			_onStopCallback = callback;
+			return this;
+	
+		};
+	
+		this.update = function (time) {
+	
+			var property;
+			var elapsed;
+			var value;
+	
+			if (time < _startTime) {
+				return true;
+			}
+	
+			if (_onStartCallbackFired === false) {
+	
+				if (_onStartCallback !== null) {
+					_onStartCallback.call(_object);
+				}
+	
+				_onStartCallbackFired = true;
+	
+			}
+	
+			elapsed = (time - _startTime) / _duration;
+			elapsed = elapsed > 1 ? 1 : elapsed;
+	
+			value = _easingFunction(elapsed);
+	
+			for (property in _valuesEnd) {
+	
+				// Don't update properties that do not exist in the source object
+				if (_valuesStart[property] === undefined) {
+					continue;
+				}
+	
+				var start = _valuesStart[property] || 0;
+				var end = _valuesEnd[property];
+	
+				if (end instanceof Array) {
+	
+					_object[property] = _interpolationFunction(end, value);
+	
+				} else {
+	
+					// Parses relative end values with start as base (e.g.: +10, -3)
+					if (typeof (end) === 'string') {
+	
+						if (end.startsWith('+') || end.startsWith('-')) {
+							end = start + parseFloat(end, 10);
+						} else {
+							end = parseFloat(end, 10);
+						}
+					}
+	
+					// Protect against non numeric properties.
+					if (typeof (end) === 'number') {
+						_object[property] = start + (end - start) * value;
+					}
+	
+				}
+	
+			}
+	
+			if (_onUpdateCallback !== null) {
+				_onUpdateCallback.call(_object, value);
+			}
+	
+			if (elapsed === 1) {
+	
+				if (_repeat > 0) {
+	
+					if (isFinite(_repeat)) {
+						_repeat--;
+					}
+	
+					// Reassign starting values, restart by making startTime = now
+					for (property in _valuesStartRepeat) {
+	
+						if (typeof (_valuesEnd[property]) === 'string') {
+							_valuesStartRepeat[property] = _valuesStartRepeat[property] + parseFloat(_valuesEnd[property], 10);
+						}
+	
+						if (_yoyo) {
+							var tmp = _valuesStartRepeat[property];
+	
+							_valuesStartRepeat[property] = _valuesEnd[property];
+							_valuesEnd[property] = tmp;
+						}
+	
+						_valuesStart[property] = _valuesStartRepeat[property];
+	
+					}
+	
+					if (_yoyo) {
+						_reversed = !_reversed;
+					}
+	
+					_startTime = time + _delayTime;
+	
+					return true;
+	
+				} else {
+	
+					if (_onCompleteCallback !== null) {
+						_onCompleteCallback.call(_object);
+					}
+	
+					for (var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i++) {
+						// Make the chained tweens start exactly at the time they should,
+						// even if the `update()` method was called way past the duration of the tween
+						_chainedTweens[i].start(_startTime + _duration);
+					}
+	
+					return false;
+	
+				}
+	
+			}
+	
+			return true;
+	
+		};
+	
+	};
+	
+	
+	TWEEN.Easing = {
+	
+		Linear: {
+	
+			None: function (k) {
+	
+				return k;
+	
+			}
+	
+		},
+	
+		Quadratic: {
+	
+			In: function (k) {
+	
+				return k * k;
+	
+			},
+	
+			Out: function (k) {
+	
+				return k * (2 - k);
+	
+			},
+	
+			InOut: function (k) {
+	
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k;
+				}
+	
+				return - 0.5 * (--k * (k - 2) - 1);
+	
+			}
+	
+		},
+	
+		Cubic: {
+	
+			In: function (k) {
+	
+				return k * k * k;
+	
+			},
+	
+			Out: function (k) {
+	
+				return --k * k * k + 1;
+	
+			},
+	
+			InOut: function (k) {
+	
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k * k;
+				}
+	
+				return 0.5 * ((k -= 2) * k * k + 2);
+	
+			}
+	
+		},
+	
+		Quartic: {
+	
+			In: function (k) {
+	
+				return k * k * k * k;
+	
+			},
+	
+			Out: function (k) {
+	
+				return 1 - (--k * k * k * k);
+	
+			},
+	
+			InOut: function (k) {
+	
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k * k * k;
+				}
+	
+				return - 0.5 * ((k -= 2) * k * k * k - 2);
+	
+			}
+	
+		},
+	
+		Quintic: {
+	
+			In: function (k) {
+	
+				return k * k * k * k * k;
+	
+			},
+	
+			Out: function (k) {
+	
+				return --k * k * k * k * k + 1;
+	
+			},
+	
+			InOut: function (k) {
+	
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k * k * k * k;
+				}
+	
+				return 0.5 * ((k -= 2) * k * k * k * k + 2);
+	
+			}
+	
+		},
+	
+		Sinusoidal: {
+	
+			In: function (k) {
+	
+				return 1 - Math.cos(k * Math.PI / 2);
+	
+			},
+	
+			Out: function (k) {
+	
+				return Math.sin(k * Math.PI / 2);
+	
+			},
+	
+			InOut: function (k) {
+	
+				return 0.5 * (1 - Math.cos(Math.PI * k));
+	
+			}
+	
+		},
+	
+		Exponential: {
+	
+			In: function (k) {
+	
+				return k === 0 ? 0 : Math.pow(1024, k - 1);
+	
+			},
+	
+			Out: function (k) {
+	
+				return k === 1 ? 1 : 1 - Math.pow(2, - 10 * k);
+	
+			},
+	
+			InOut: function (k) {
+	
+				if (k === 0) {
+					return 0;
+				}
+	
+				if (k === 1) {
+					return 1;
+				}
+	
+				if ((k *= 2) < 1) {
+					return 0.5 * Math.pow(1024, k - 1);
+				}
+	
+				return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
+	
+			}
+	
+		},
+	
+		Circular: {
+	
+			In: function (k) {
+	
+				return 1 - Math.sqrt(1 - k * k);
+	
+			},
+	
+			Out: function (k) {
+	
+				return Math.sqrt(1 - (--k * k));
+	
+			},
+	
+			InOut: function (k) {
+	
+				if ((k *= 2) < 1) {
+					return - 0.5 * (Math.sqrt(1 - k * k) - 1);
+				}
+	
+				return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
+	
+			}
+	
+		},
+	
+		Elastic: {
+	
+			In: function (k) {
+	
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+	
+				if (k === 0) {
+					return 0;
+				}
+	
+				if (k === 1) {
+					return 1;
+				}
+	
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+	
+				return - (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+	
+			},
+	
+			Out: function (k) {
+	
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+	
+				if (k === 0) {
+					return 0;
+				}
+	
+				if (k === 1) {
+					return 1;
+				}
+	
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+	
+				return (a * Math.pow(2, - 10 * k) * Math.sin((k - s) * (2 * Math.PI) / p) + 1);
+	
+			},
+	
+			InOut: function (k) {
+	
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+	
+				if (k === 0) {
+					return 0;
+				}
+	
+				if (k === 1) {
+					return 1;
+				}
+	
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+	
+				if ((k *= 2) < 1) {
+					return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+				}
+	
+				return a * Math.pow(2, -10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
+	
+			}
+	
+		},
+	
+		Back: {
+	
+			In: function (k) {
+	
+				var s = 1.70158;
+	
+				return k * k * ((s + 1) * k - s);
+	
+			},
+	
+			Out: function (k) {
+	
+				var s = 1.70158;
+	
+				return --k * k * ((s + 1) * k + s) + 1;
+	
+			},
+	
+			InOut: function (k) {
+	
+				var s = 1.70158 * 1.525;
+	
+				if ((k *= 2) < 1) {
+					return 0.5 * (k * k * ((s + 1) * k - s));
+				}
+	
+				return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
+	
+			}
+	
+		},
+	
+		Bounce: {
+	
+			In: function (k) {
+	
+				return 1 - TWEEN.Easing.Bounce.Out(1 - k);
+	
+			},
+	
+			Out: function (k) {
+	
+				if (k < (1 / 2.75)) {
+					return 7.5625 * k * k;
+				} else if (k < (2 / 2.75)) {
+					return 7.5625 * (k -= (1.5 / 2.75)) * k + 0.75;
+				} else if (k < (2.5 / 2.75)) {
+					return 7.5625 * (k -= (2.25 / 2.75)) * k + 0.9375;
+				} else {
+					return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
+				}
+	
+			},
+	
+			InOut: function (k) {
+	
+				if (k < 0.5) {
+					return TWEEN.Easing.Bounce.In(k * 2) * 0.5;
+				}
+	
+				return TWEEN.Easing.Bounce.Out(k * 2 - 1) * 0.5 + 0.5;
+	
+			}
+	
+		}
+	
+	};
+	
+	TWEEN.Interpolation = {
+	
+		Linear: function (v, k) {
+	
+			var m = v.length - 1;
+			var f = m * k;
+			var i = Math.floor(f);
+			var fn = TWEEN.Interpolation.Utils.Linear;
+	
+			if (k < 0) {
+				return fn(v[0], v[1], f);
+			}
+	
+			if (k > 1) {
+				return fn(v[m], v[m - 1], m - f);
+			}
+	
+			return fn(v[i], v[i + 1 > m ? m : i + 1], f - i);
+	
+		},
+	
+		Bezier: function (v, k) {
+	
+			var b = 0;
+			var n = v.length - 1;
+			var pw = Math.pow;
+			var bn = TWEEN.Interpolation.Utils.Bernstein;
+	
+			for (var i = 0; i <= n; i++) {
+				b += pw(1 - k, n - i) * pw(k, i) * v[i] * bn(n, i);
+			}
+	
+			return b;
+	
+		},
+	
+		CatmullRom: function (v, k) {
+	
+			var m = v.length - 1;
+			var f = m * k;
+			var i = Math.floor(f);
+			var fn = TWEEN.Interpolation.Utils.CatmullRom;
+	
+			if (v[0] === v[m]) {
+	
+				if (k < 0) {
+					i = Math.floor(f = m * (1 + k));
+				}
+	
+				return fn(v[(i - 1 + m) % m], v[i], v[(i + 1) % m], v[(i + 2) % m], f - i);
+	
+			} else {
+	
+				if (k < 0) {
+					return v[0] - (fn(v[0], v[0], v[1], v[1], -f) - v[0]);
+				}
+	
+				if (k > 1) {
+					return v[m] - (fn(v[m], v[m], v[m - 1], v[m - 1], f - m) - v[m]);
+				}
+	
+				return fn(v[i ? i - 1 : 0], v[i], v[m < i + 1 ? m : i + 1], v[m < i + 2 ? m : i + 2], f - i);
+	
+			}
+	
+		},
+	
+		Utils: {
+	
+			Linear: function (p0, p1, t) {
+	
+				return (p1 - p0) * t + p0;
+	
+			},
+	
+			Bernstein: function (n, i) {
+	
+				var fc = TWEEN.Interpolation.Utils.Factorial;
+	
+				return fc(n) / fc(i) / fc(n - i);
+	
+			},
+	
+			Factorial: (function () {
+	
+				var a = [1];
+	
+				return function (n) {
+	
+					var s = 1;
+	
+					if (a[n]) {
+						return a[n];
+					}
+	
+					for (var i = n; i > 1; i--) {
+						s *= i;
+					}
+	
+					a[n] = s;
+					return s;
+	
+				};
+	
+			})(),
+	
+			CatmullRom: function (p0, p1, p2, p3, t) {
+	
+				var v0 = (p2 - p0) * 0.5;
+				var v1 = (p3 - p1) * 0.5;
+				var t2 = t * t;
+				var t3 = t * t2;
+	
+				return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (- 3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
+	
+			}
+	
+		}
+	
+	};
+	
+	// UMD (Universal Module Definition)
+	(function (root) {
+	
+		if (true) {
+	
+			// AMD
+			!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+				return TWEEN;
+			}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	
+		} else if (typeof module !== 'undefined' && typeof exports === 'object') {
+	
+			// Node.js
+			module.exports = TWEEN;
+	
+		} else if (root !== undefined) {
+	
+			// Global variable
+			root.TWEEN = TWEEN;
+	
+		}
+	
+	})(this);
+
+
+/***/ },
+/* 4 */
 /*!*********************!*\
   !*** ../~/d3/d3.js ***!
   \*********************/
@@ -50454,7 +51483,165 @@
 	}();
 
 /***/ },
-/* 4 */
+/* 5 */
+/*!***************************************!*\
+  !*** ./src/neilviz/CircleMaterial.js ***!
+  \***************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var THREE = __webpack_require__(/*! three */ 2);
+	var extend = __webpack_require__(/*! ./util/extend */ 6);
+	
+	var CircleMaterial = function(params){
+	
+	  params = params || {};
+	
+	  var color = (params.color) ? params.color : 0xffffff;
+	
+	  var indivColors = !!params.indivColors;
+	
+	
+	  var uniforms = {
+	
+	    color:     { type: "c", value: new THREE.Color( color ) },
+	    opacity:   { type: "f", value: 1}	,
+	    epsilon:   { type: "f", value: 0.02}	,
+	
+	};
+	
+	
+	
+	
+	
+	
+	
+	
+	  var vertexShader = [
+	
+				"#define SDF",
+	
+	      (indivColors) ? "#define COLORS" : "",
+	
+	
+	
+	      "varying vec2 vUv;",
+	      '#ifdef COLORS',
+	      " attribute vec3 colors;",
+	      " varying vec3 vColor;",
+	      '#endif',
+	
+	  		"void main() {",
+	
+	  		"vUv = uv;",
+	      '#ifdef COLORS',
+	      " vColor = colors;",
+	      '#endif',
+	  		"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+	
+	  		"}"
+	
+			].join("\n");
+	
+	
+	    var fragmentShader =  [
+	
+	      (indivColors) ? "#define COLORS" : "",
+	
+	
+				"uniform vec3 color;",
+	      "uniform sampler2D map;",
+	      "uniform float epsilon;",
+	      "uniform float opacity;",
+	      "varying vec2 vUv;",
+	      '#ifdef COLORS',
+	      " varying vec3 vColor;",
+	      '#endif',
+	
+	
+	
+	
+	
+				"void main() {",
+	
+	
+	      "vec4 rgba = texture2D(map,  vUv);",
+	      //"vec4 reveal = texture2D(revealMap,  vUv);",
+	
+	
+	      '				#ifdef GL_OES_standard_derivatives',
+	      '				float w = clamp( 50.0 * epsilon * ( abs( dFdx( vUv.x ) ) + abs( dFdy( vUv.y ) ) ), 0.0, 0.5 );',
+	      '				#else',
+	      '				float w = epsilon;',
+	      '				#endif',
+	      '       float r2 = (vUv.x - 0.5) * (vUv.x - 0.5) +  (vUv.y - 0.5) * (vUv.y - 0.5) ;',
+	    //  '       w = 0.02; ',
+	      '       float sdfa = smoothstep( 0.25, 0.25 -w, r2);',
+	      '				if (sdfa < 0.01) discard;',
+	      '				#ifdef COLORS',
+	      '				gl_FragColor = vec4( vColor, opacity * sdfa);',
+	      '				#else',
+	      '				gl_FragColor = vec4( color, opacity * sdfa);',
+	      '				#endif',
+	
+	
+	      //
+	
+	      "}"
+	
+			].join("\n");
+	
+	
+	    THREE.ShaderMaterial.call(this,{
+	      uniforms: uniforms,
+	      fragmentShader: fragmentShader,
+	      vertexShader: vertexShader,
+	      derivatives: true,
+	      transparent: true,
+	      name: 'circle',  //??
+	
+	    });
+	
+	
+	
+	
+	
+	
+	
+	};
+	
+	CircleMaterial.prototype =  Object.create( THREE.ShaderMaterial.prototype );
+	
+	module.exports = CircleMaterial;
+
+
+/***/ },
+/* 6 */
+/*!************************************!*\
+  !*** ./src/neilviz/util/extend.js ***!
+  \************************************/
+/***/ function(module, exports) {
+
+	var extend = function(out) {
+	  out = out || {};
+	
+	  for (var i = 1; i < arguments.length; i++) {
+	    if (!arguments[i])
+	      continue;
+	
+	    for (var key in arguments[i]) {
+	      if (arguments[i].hasOwnProperty(key))
+	        out[key] = arguments[i][key];
+	    }
+	  }
+	
+	  return out;
+	};
+	
+	module.exports = extend;
+
+
+/***/ },
+/* 7 */
 /*!***********************************************!*\
   !*** ./src/neilviz/BufferedPlanesGeometry.js ***!
   \***********************************************/
@@ -50474,6 +51661,9 @@
 	
 	  this.count = Math.floor(params.count) || 1;
 	
+	  this.indivColors = !!params.indivColors;
+	
+	
 	  this.verticesPerPlane = gridX1 * gridY1;
 	  this.indicesPerPlane = gridX * gridY * 6;
 	
@@ -50483,6 +51673,12 @@
 	  var uvs = new Float32Array(this.verticesPerPlane * this.count * 2);
 	  var indices = new((vertices.length / 3) > 65535 ? Uint32Array : Uint16Array)(this.indicesPerPlane * this.count);
 	
+	  var ti = BufferedPlanesGeometry.indexTemplate;
+	  for (var c=0; c < this.count; c++){
+	    for (i = 0, j = this.indicesPerPlane * c; i < this.indicesPerPlane; i++, j++) {
+	      indices[j] = ti[i] + this.verticesPerPlane * c;
+	    }
+	  }
 	
 	
 	  this.setIndex(new THREE.BufferAttribute(indices, 1));
@@ -50490,14 +51686,19 @@
 	  this.addAttribute('normal', new THREE.BufferAttribute(normals, 3));
 	  this.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 	
+	  if (this.indivColors) {
+	    var colors = new Float32Array(this.verticesPerPlane * this.count * 3);
+	    this.addAttribute('colors', new THREE.BufferAttribute(colors, 3));
+	  }
+	
 	};
 	
 	BufferedPlanesGeometry.prototype = Object.create(THREE.BufferGeometry.prototype);
 	//BufferedPlanesGeometry.prototype.constructor = BufferedPlanesGeometry;
 	
 	
-	BufferedPlanesGeometry.prototype.mergeIndex = function(geometry,offset){
-	  if( this.index ){
+	BufferedPlanesGeometry.prototype.mergeIndex = function(geometry, offset) {
+	  if (this.index) {
 	
 	
 	    var indices = this.index.array;
@@ -50510,134 +51711,2878 @@
 	
 	
 	
-	}
+	  }
 	};
 	
-	BufferedPlanesGeometry.prototype.renderSinglePositions = function(index,center,width){
-	    var t = BufferedPlanesGeometry.positionsTemplat;
-	    var c = [center.x || 0,center.y || 0, center.z || 0];
+	BufferedPlanesGeometry.prototype.renderSinglePositions = function(index, center, size) {
+	  //TODO: make size allow a abject array to specify width+ height
+	  var t = BufferedPlanesGeometry.positionsTemplate;
+	  var c = [center.x || 0, center.y || 0, center.z || 0];
+	  var i, j;
 	
-	    var vertices = this.attributes.position.array;
+	  var vertices = this.attributes.position.array;
 	
-	    for (var i = 0, j = this.verticesPerPlane * index; i < this.verticesPerPlane; i++, j++) {
-	      vertices[j*3+0] = t[i*3+0] * width + center.x;
-	      vertices[j*3+1] = t[i*3+1] * width + center.y;
-	      vertices[j*3+2] = t[i*3+2] * width + center.z;
+	  for (i = 0, j = this.verticesPerPlane * index; i < this.verticesPerPlane; i++, j++) {
+	    vertices[j * 3 + 0] = t[i * 3 + 0] * size + center.x;
+	    vertices[j * 3 + 1] = t[i * 3 + 1] * size + center.y;
+	    vertices[j * 3 + 2] = t[i * 3 + 2] * size + center.z;
+	  }
+	
+	  this.attributes.position.needsUpdate = true;
+	
+	
+	
+	};
+	BufferedPlanesGeometry.prototype.renderSinglePositionAndScale = function(index, x,y,z, w,h,d) {
+	  //TODO: make size allow a abject array to specify width+ height
+	  var t = BufferedPlanesGeometry.positionsTemplate;
+	  var i, j;
+	
+	  var vertices = this.attributes.position.array;
+	
+	  for (i = 0, j = this.verticesPerPlane * index; i < this.verticesPerPlane; i++, j++) {
+	    vertices[j * 3 + 0] = t[i * 3 + 0] * w + x;
+	    vertices[j * 3 + 1] = t[i * 3 + 1] * h + y;
+	  //  vertices[j * 3 + 2] = t[i * 3 + 2] * d + z;
+	  }
+	
+	
+	  this.attributes.position.needsUpdate = true;
+	
+	
+	
+	};
+	
+	BufferedPlanesGeometry.prototype.setSingleColor = function(index, color) {
+	
+	  if (this.indivColors && color) {
+	
+	    var colors = this.attributes.colors.array;
+	
+	    for (i = 0, j = this.verticesPerPlane * index; i < this.verticesPerPlane; i++, j++) {
+	      colors[j * 3 + 0] = color.r;
+	      colors[j * 3 + 1] = color.g;
+	      colors[j * 3 + 2] = color.b;
 	    }
+	    this.attributes.colors.needsUpdate = true;
 	
-	    this.attributes.position.needsUpdate = true;
+	  }
 	
 	};
 	
 	
 	
-	BufferedPlanesGeometry.positionsTemplat= [-0.5, 0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0];
+	BufferedPlanesGeometry.positionsTemplate = [-0.5, 0.5, 0, 0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0];
+	BufferedPlanesGeometry.indexTemplate = [0, 2, 1, 2, 3, 1];
 	
 	module.exports = BufferedPlanesGeometry;
 
 
 /***/ },
-/* 5 */
+/* 8 */
+/*!*********************************!*\
+  !*** ./src/neilviz/util/mix.js ***!
+  \*********************************/
+/***/ function(module, exports) {
+
+	module.exports = function(val1, val2, blend) {
+		//modeled after glsl mix function
+		blend = Math.min(1, Math.max(0, blend));
+		return val1 + (val2 - val1) * blend;
+	};
+
+
+/***/ },
+/* 9 */
+/*!*************************!*\
+  !*** ./src/blobTest.js ***!
+  \*************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var THREE = __webpack_require__(/*! three */ 2);
+	var MarchingCubes = __webpack_require__(/*! ./MarchingCubes */ 10);
+	
+	
+	//test
+	// MARCHING CUBES
+	
+	      var material = new THREE.MeshPhongMaterial({color:0x0000ff, side: THREE.BackSide});
+	
+	      var resolution = 200;
+	      var numBlobs = 10;
+	
+	      var effect = new MarchingCubes( resolution, material, true, true );
+	
+	      var scaleFix = 1000;
+	      var posFix = {x:0.5,y:0.5, z:0.5}
+	
+	      effect.position.set( -posFix.x, -posFix.y, -posFix.z );
+	      effect.scale.set( scaleFix/2, scaleFix/2, scaleFix/2 );
+	
+	      effect.enableUvs = false;
+	      effect.enableColors = false;
+	
+	
+	      function updateCubes( object, time, numblobs ) {
+	
+	  			object.reset();
+	
+	  			// fill the field with some metaballs
+	
+	  			var i, ballx, bally, ballz, subtract, strength;
+	
+	  			subtract = 12;
+	  			strength = 1.2 / ( ( Math.sqrt( numblobs ) - 1 ) / 4 + 1 );
+	
+	  			for ( i = 0; i < numblobs; i ++ ) {
+	
+	  				ballx = Math.sin( i + 1.26 * time * ( 1.03 + 0.5 * Math.cos( 0.21 * i ) ) ) * 0.27 + 0.5;
+	  				bally = Math.abs( Math.cos( i + 1.12 * time * Math.cos( 1.22 + 0.1424 * i ) ) ) * 0.77; // dip into the floor
+	  				ballz = Math.cos( i + 1.32 * time * 0.1 * Math.sin( ( 0.92 + 0.53 * i ) ) ) * 0.27 + 0.5;
+	
+	  				object.addBall(ballx, bally, ballz, strength, subtract);
+	
+	  			}
+	
+	  		}
+	      effect.update = function( nodes ) {
+	
+	  			effect.reset();
+	
+	  			// fill the field with some metaballs
+	
+	  			var i, ballx, bally, ballz, subtract, strength;
+	
+	  			//subtract = 12;
+	  			subtract = 40;
+	  			strength = 0.1 * 1.2 / ( ( Math.sqrt( nodes.length ) - 1 ) / 4 + 1 );
+	
+	  			for ( i = 0; i < nodes.length; i ++ ) {
+	          var node = nodes[i];
+	  				effect.addBall(node.x/scaleFix + posFix.x, node.y/scaleFix + posFix.y, posFix.z, strength, subtract);
+	
+	  			}
+	
+	
+	  		};
+	
+	
+	
+	    //  updateCubes( effect, 0, numBlobs);
+	
+	
+	module.exports = effect;
+
+
+/***/ },
+/* 10 */
+/*!******************************!*\
+  !*** ./src/MarchingCubes.js ***!
+  \******************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var THREE = __webpack_require__(/*! three */ 2);
+	
+	
+	/**
+	 * @author alteredq / http://alteredqualia.com/
+	 *
+	 * Port of greggman's ThreeD version of marching cubes to Three.js
+	 * http://webglsamples.googlecode.com/hg/blob/blob.html
+	 */
+	
+	var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
+	
+		THREE.ImmediateRenderObject.call( this );
+	
+		this.material = material;
+	
+		this.enableUvs = enableUvs !== undefined ? enableUvs : false;
+		this.enableColors = enableColors !== undefined ? enableColors : false;
+	
+		// functions have to be object properties
+		// prototype functions kill performance
+		// (tested and it was 4x slower !!!)
+	
+		this.init = function( resolution ) {
+	
+			this.resolution = resolution;
+	
+			// parameters
+	
+			this.isolation = 80.0;
+	
+			// size of field, 32 is pushing it in Javascript :)
+	
+			this.size = resolution;
+			this.size2 = this.size * this.size;
+			this.size3 = this.size2 * this.size;
+			this.halfsize = this.size / 2.0;
+	
+			// deltas
+	
+			this.delta = 2.0 / this.size;
+			this.yd = this.size;
+			this.zd = this.size2;
+	
+			this.field = new Float32Array( this.size3 );
+			this.normal_cache = new Float32Array( this.size3 * 3 );
+	
+			// temp buffers used in polygonize
+	
+			this.vlist = new Float32Array( 12 * 3 );
+			this.nlist = new Float32Array( 12 * 3 );
+	
+			this.firstDraw = true;
+	
+			// immediate render mode simulator
+	
+			this.maxCount = 4096; // TODO: find the fastest size for this buffer
+			this.count = 0;
+	
+			this.hasPositions = false;
+			this.hasNormals = false;
+			this.hasColors = false;
+			this.hasUvs = false;
+	
+			this.positionArray = new Float32Array( this.maxCount * 3 );
+			this.normalArray   = new Float32Array( this.maxCount * 3 );
+	
+			if ( this.enableUvs ) {
+	
+				this.uvArray = new Float32Array( this.maxCount * 2 );
+	
+			}
+	
+			if ( this.enableColors ) {
+	
+				this.colorArray   = new Float32Array( this.maxCount * 3 );
+	
+			}
+	
+		};
+	
+		///////////////////////
+		// Polygonization
+		///////////////////////
+	
+		this.lerp = function( a, b, t ) { return a + ( b - a ) * t; };
+	
+		this.VIntX = function( q, pout, nout, offset, isol, x, y, z, valp1, valp2 ) {
+	
+			var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
+			nc = this.normal_cache;
+	
+			pout[ offset ] 	   = x + mu * this.delta;
+			pout[ offset + 1 ] = y;
+			pout[ offset + 2 ] = z;
+	
+			nout[ offset ] 	   = this.lerp( nc[ q ],     nc[ q + 3 ], mu );
+			nout[ offset + 1 ] = this.lerp( nc[ q + 1 ], nc[ q + 4 ], mu );
+			nout[ offset + 2 ] = this.lerp( nc[ q + 2 ], nc[ q + 5 ], mu );
+	
+		};
+	
+		this.VIntY = function( q, pout, nout, offset, isol, x, y, z, valp1, valp2 ) {
+	
+			var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
+			nc = this.normal_cache;
+	
+			pout[ offset ] 	   = x;
+			pout[ offset + 1 ] = y + mu * this.delta;
+			pout[ offset + 2 ] = z;
+	
+			var q2 = q + this.yd * 3;
+	
+			nout[ offset ] 	   = this.lerp( nc[ q ],     nc[ q2 ],     mu );
+			nout[ offset + 1 ] = this.lerp( nc[ q + 1 ], nc[ q2 + 1 ], mu );
+			nout[ offset + 2 ] = this.lerp( nc[ q + 2 ], nc[ q2 + 2 ], mu );
+	
+		};
+	
+		this.VIntZ = function( q, pout, nout, offset, isol, x, y, z, valp1, valp2 ) {
+	
+			var mu = ( isol - valp1 ) / ( valp2 - valp1 ),
+			nc = this.normal_cache;
+	
+			pout[ offset ] 	   = x;
+			pout[ offset + 1 ] = y;
+			pout[ offset + 2 ] = z + mu * this.delta;
+	
+			var q2 = q + this.zd * 3;
+	
+			nout[ offset ] 	   = this.lerp( nc[ q ],     nc[ q2 ],     mu );
+			nout[ offset + 1 ] = this.lerp( nc[ q + 1 ], nc[ q2 + 1 ], mu );
+			nout[ offset + 2 ] = this.lerp( nc[ q + 2 ], nc[ q2 + 2 ], mu );
+	
+		};
+	
+		this.compNorm = function( q ) {
+	
+			var q3 = q * 3;
+	
+			if ( this.normal_cache[ q3 ] === 0.0 ) {
+	
+				this.normal_cache[ q3     ] = this.field[ q - 1  ] 	    - this.field[ q + 1 ];
+				this.normal_cache[ q3 + 1 ] = this.field[ q - this.yd ] - this.field[ q + this.yd ];
+				this.normal_cache[ q3 + 2 ] = this.field[ q - this.zd ] - this.field[ q + this.zd ];
+	
+			}
+	
+		};
+	
+		// Returns total number of triangles. Fills triangles.
+		// (this is where most of time is spent - it's inner work of O(n3) loop )
+	
+		this.polygonize = function( fx, fy, fz, q, isol, renderCallback ) {
+	
+			// cache indices
+			var q1 = q + 1,
+				qy = q + this.yd,
+				qz = q + this.zd,
+				q1y = q1 + this.yd,
+				q1z = q1 + this.zd,
+				qyz = q + this.yd + this.zd,
+				q1yz = q1 + this.yd + this.zd;
+	
+			var cubeindex = 0,
+				field0 = this.field[ q ],
+				field1 = this.field[ q1 ],
+				field2 = this.field[ qy ],
+				field3 = this.field[ q1y ],
+				field4 = this.field[ qz ],
+				field5 = this.field[ q1z ],
+				field6 = this.field[ qyz ],
+				field7 = this.field[ q1yz ];
+	
+			if ( field0 < isol ) cubeindex |= 1;
+			if ( field1 < isol ) cubeindex |= 2;
+			if ( field2 < isol ) cubeindex |= 8;
+			if ( field3 < isol ) cubeindex |= 4;
+			if ( field4 < isol ) cubeindex |= 16;
+			if ( field5 < isol ) cubeindex |= 32;
+			if ( field6 < isol ) cubeindex |= 128;
+			if ( field7 < isol ) cubeindex |= 64;
+	
+			// if cube is entirely in/out of the surface - bail, nothing to draw
+	
+			var bits = THREE.edgeTable[ cubeindex ];
+			if ( bits === 0 ) return 0;
+	
+			var d = this.delta,
+				fx2 = fx + d,
+				fy2 = fy + d,
+				fz2 = fz + d;
+	
+			// top of the cube
+	
+			if ( bits & 1 ) {
+	
+				this.compNorm( q );
+				this.compNorm( q1 );
+				this.VIntX( q * 3, this.vlist, this.nlist, 0, isol, fx, fy, fz, field0, field1 );
+	
+			};
+	
+			if ( bits & 2 ) {
+	
+				this.compNorm( q1 );
+				this.compNorm( q1y );
+				this.VIntY( q1 * 3, this.vlist, this.nlist, 3, isol, fx2, fy, fz, field1, field3 );
+	
+			};
+	
+			if ( bits & 4 ) {
+	
+				this.compNorm( qy );
+				this.compNorm( q1y );
+				this.VIntX( qy * 3, this.vlist, this.nlist, 6, isol, fx, fy2, fz, field2, field3 );
+	
+			};
+	
+			if ( bits & 8 ) {
+	
+				this.compNorm( q );
+				this.compNorm( qy );
+				this.VIntY( q * 3, this.vlist, this.nlist, 9, isol, fx, fy, fz, field0, field2 );
+	
+			};
+	
+			// bottom of the cube
+	
+			if ( bits & 16 )  {
+	
+				this.compNorm( qz );
+				this.compNorm( q1z );
+				this.VIntX( qz * 3, this.vlist, this.nlist, 12, isol, fx, fy, fz2, field4, field5 );
+	
+			};
+	
+			if ( bits & 32 )  {
+	
+				this.compNorm( q1z );
+				this.compNorm( q1yz );
+				this.VIntY( q1z * 3,  this.vlist, this.nlist, 15, isol, fx2, fy, fz2, field5, field7 );
+	
+			};
+	
+			if ( bits & 64 ) {
+	
+				this.compNorm( qyz );
+				this.compNorm( q1yz );
+				this.VIntX( qyz * 3, this.vlist, this.nlist, 18, isol, fx, fy2, fz2, field6, field7 );
+	
+			};
+	
+			if ( bits & 128 ) {
+	
+				this.compNorm( qz );
+				this.compNorm( qyz );
+				this.VIntY( qz * 3,  this.vlist, this.nlist, 21, isol, fx, fy, fz2, field4, field6 );
+	
+			};
+	
+			// vertical lines of the cube
+	
+			if ( bits & 256 ) {
+	
+				this.compNorm( q );
+				this.compNorm( qz );
+				this.VIntZ( q * 3, this.vlist, this.nlist, 24, isol, fx, fy, fz, field0, field4 );
+	
+			};
+	
+			if ( bits & 512 ) {
+	
+				this.compNorm( q1 );
+				this.compNorm( q1z );
+				this.VIntZ( q1 * 3,  this.vlist, this.nlist, 27, isol, fx2, fy,  fz, field1, field5 );
+	
+			};
+	
+			if ( bits & 1024 ) {
+	
+				this.compNorm( q1y );
+				this.compNorm( q1yz );
+				this.VIntZ( q1y * 3, this.vlist, this.nlist, 30, isol, fx2, fy2, fz, field3, field7 );
+	
+			};
+	
+			if ( bits & 2048 ) {
+	
+				this.compNorm( qy );
+				this.compNorm( qyz );
+				this.VIntZ( qy * 3, this.vlist, this.nlist, 33, isol, fx,  fy2, fz, field2, field6 );
+	
+			};
+	
+			cubeindex <<= 4;  // re-purpose cubeindex into an offset into triTable
+	
+			var o1, o2, o3, numtris = 0, i = 0;
+	
+			// here is where triangles are created
+	
+			while ( THREE.triTable[ cubeindex + i ] != -1 ) {
+	
+				o1 = cubeindex + i;
+				o2 = o1 + 1;
+				o3 = o1 + 2;
+	
+				this.posnormtriv( this.vlist, this.nlist,
+								  3 * THREE.triTable[ o1 ],
+								  3 * THREE.triTable[ o2 ],
+								  3 * THREE.triTable[ o3 ],
+								  renderCallback );
+	
+				i += 3;
+				numtris ++;
+	
+			}
+	
+			return numtris;
+	
+		};
+	
+		/////////////////////////////////////
+		// Immediate render mode simulator
+		/////////////////////////////////////
+	
+		this.posnormtriv = function( pos, norm, o1, o2, o3, renderCallback ) {
+	
+			var c = this.count * 3;
+	
+			// positions
+	
+			this.positionArray[ c ] 	= pos[ o1 ];
+			this.positionArray[ c + 1 ] = pos[ o1 + 1 ];
+			this.positionArray[ c + 2 ] = pos[ o1 + 2 ];
+	
+			this.positionArray[ c + 3 ] = pos[ o2 ];
+			this.positionArray[ c + 4 ] = pos[ o2 + 1 ];
+			this.positionArray[ c + 5 ] = pos[ o2 + 2 ];
+	
+			this.positionArray[ c + 6 ] = pos[ o3 ];
+			this.positionArray[ c + 7 ] = pos[ o3 + 1 ];
+			this.positionArray[ c + 8 ] = pos[ o3 + 2 ];
+	
+			// normals
+	
+			this.normalArray[ c ] 	  = norm[ o1 ];
+			this.normalArray[ c + 1 ] = norm[ o1 + 1 ];
+			this.normalArray[ c + 2 ] = norm[ o1 + 2 ];
+	
+			this.normalArray[ c + 3 ] = norm[ o2 ];
+			this.normalArray[ c + 4 ] = norm[ o2 + 1 ];
+			this.normalArray[ c + 5 ] = norm[ o2 + 2 ];
+	
+			this.normalArray[ c + 6 ] = norm[ o3 ];
+			this.normalArray[ c + 7 ] = norm[ o3 + 1 ];
+			this.normalArray[ c + 8 ] = norm[ o3 + 2 ];
+	
+			// uvs
+	
+			if ( this.enableUvs ) {
+	
+				var d = this.count * 2;
+	
+				this.uvArray[ d ] 	  = pos[ o1 ];
+				this.uvArray[ d + 1 ] = pos[ o1 + 2 ];
+	
+				this.uvArray[ d + 2 ] = pos[ o2 ];
+				this.uvArray[ d + 3 ] = pos[ o2 + 2 ];
+	
+				this.uvArray[ d + 4 ] = pos[ o3 ];
+				this.uvArray[ d + 5 ] = pos[ o3 + 2 ];
+	
+			}
+	
+			// colors
+	
+			if ( this.enableColors ) {
+	
+				this.colorArray[ c ] 	 = pos[ o1 ];
+				this.colorArray[ c + 1 ] = pos[ o1 + 1 ];
+				this.colorArray[ c + 2 ] = pos[ o1 + 2 ];
+	
+				this.colorArray[ c + 3 ] = pos[ o2 ];
+				this.colorArray[ c + 4 ] = pos[ o2 + 1 ];
+				this.colorArray[ c + 5 ] = pos[ o2 + 2 ];
+	
+				this.colorArray[ c + 6 ] = pos[ o3 ];
+				this.colorArray[ c + 7 ] = pos[ o3 + 1 ];
+				this.colorArray[ c + 8 ] = pos[ o3 + 2 ];
+	
+			}
+	
+			this.count += 3;
+	
+			if ( this.count >= this.maxCount - 3 ) {
+	
+				this.hasPositions = true;
+				this.hasNormals = true;
+	
+				if ( this.enableUvs ) {
+	
+					this.hasUvs = true;
+	
+				}
+	
+				if ( this.enableColors ) {
+	
+					this.hasColors = true;
+	
+				}
+	
+				renderCallback( this );
+	
+			}
+	
+		};
+	
+		this.begin = function( ) {
+	
+			this.count = 0;
+	
+			this.hasPositions = false;
+			this.hasNormals = false;
+			this.hasUvs = false;
+			this.hasColors = false;
+	
+		};
+	
+		this.end = function( renderCallback ) {
+	
+			if ( this.count === 0 )
+				return;
+	
+			for ( var i = this.count * 3; i < this.positionArray.length; i ++ )
+				this.positionArray[ i ] = 0.0;
+	
+			this.hasPositions = true;
+			this.hasNormals = true;
+	
+			if ( this.enableUvs ) {
+	
+				this.hasUvs = true;
+	
+			}
+	
+			if ( this.enableColors ) {
+	
+				this.hasColors = true;
+	
+			}
+	
+			renderCallback( this );
+	
+		};
+	
+		/////////////////////////////////////
+		// Metaballs
+		/////////////////////////////////////
+	
+		// Adds a reciprocal ball (nice and blobby) that, to be fast, fades to zero after
+		// a fixed distance, determined by strength and subtract.
+	
+		this.addBall = function( ballx, bally, ballz, strength, subtract ) {
+	
+			// Let's solve the equation to find the radius:
+			// 1.0 / (0.000001 + radius^2) * strength - subtract = 0
+			// strength / (radius^2) = subtract
+			// strength = subtract * radius^2
+			// radius^2 = strength / subtract
+			// radius = sqrt(strength / subtract)
+	
+			var radius = this.size * Math.sqrt( strength / subtract ),
+				zs = ballz * this.size,
+				ys = bally * this.size,
+				xs = ballx * this.size;
+	
+			var min_z = Math.floor( zs - radius ); if ( min_z < 1 ) min_z = 1;
+			var max_z = Math.floor( zs + radius ); if ( max_z > this.size - 1 ) max_z = this.size - 1;
+			var min_y = Math.floor( ys - radius ); if ( min_y < 1 ) min_y = 1;
+			var max_y = Math.floor( ys + radius ); if ( max_y > this.size - 1 ) max_y = this.size - 1;
+			var min_x = Math.floor( xs - radius ); if ( min_x < 1  ) min_x = 1;
+			var max_x = Math.floor( xs + radius ); if ( max_x > this.size - 1 ) max_x = this.size - 1;
+	
+	
+			// Don't polygonize in the outer layer because normals aren't
+			// well-defined there.
+	
+			var x, y, z, y_offset, z_offset, fx, fy, fz, fz2, fy2, val;
+	
+			for ( z = min_z; z < max_z; z++ ) {
+	
+				z_offset = this.size2 * z,
+				fz = z / this.size - ballz,
+				fz2 = fz * fz;
+	
+				for ( y = min_y; y < max_y; y++ ) {
+	
+					y_offset = z_offset + this.size * y;
+					fy = y / this.size - bally;
+					fy2 = fy * fy;
+	
+					for ( x = min_x; x < max_x; x++ ) {
+	
+						fx = x / this.size - ballx;
+						val = strength / ( 0.000001 + fx*fx + fy2 + fz2 ) - subtract;
+						if ( val > 0.0 ) this.field[ y_offset + x ] += val;
+	
+					}
+	
+				}
+	
+			}
+	
+		};
+	
+		this.addPlaneX = function( strength, subtract ) {
+	
+			var x, y, z, xx, val, xdiv, cxy,
+	
+				// cache attribute lookups
+				size = this.size,
+				yd = this.yd,
+				zd = this.zd,
+				field = this.field,
+	
+				dist = size * Math.sqrt( strength / subtract );
+	
+			if ( dist > size ) dist = size;
+	
+			for ( x = 0; x < dist; x ++ ) {
+	
+				xdiv = x / size;
+				xx = xdiv * xdiv;
+				val = strength / ( 0.0001 + xx ) - subtract;
+	
+				if ( val > 0.0 ) {
+	
+					for ( y = 0; y < size; y ++ ) {
+	
+						cxy = x + y * yd;
+	
+						for ( z = 0; z < size; z ++ ) {
+	
+							field[ zd * z + cxy ] += val;
+	
+						}
+	
+					}
+	
+				}
+	
+			}
+	
+		};
+	
+		this.addPlaneY = function( strength, subtract ) {
+	
+			var x, y, z, yy, val, ydiv, cy, cxy,
+	
+				// cache attribute lookups
+				size = this.size,
+				yd = this.yd,
+				zd = this.zd,
+				field = this.field,
+	
+				dist = size * Math.sqrt( strength / subtract );
+	
+			if ( dist > size ) dist = size;
+	
+			for ( y = 0; y < dist; y ++ ) {
+	
+				ydiv = y / size;
+				yy = ydiv * ydiv;
+				val = strength / ( 0.0001 + yy ) - subtract;
+	
+				if ( val > 0.0 ) {
+	
+					cy = y * yd;
+	
+					for ( x = 0; x < size; x ++ ) {
+	
+						cxy = cy + x;
+	
+						for ( z = 0; z < size; z ++ )
+							field[ zd * z + cxy ] += val;
+	
+					}
+	
+				}
+	
+			}
+	
+		};
+	
+		this.addPlaneZ = function( strength, subtract ) {
+	
+			var x, y, z, zz, val, zdiv, cz, cyz,
+	
+				// cache attribute lookups
+				size = this.size,
+				yd = this.yd,
+				zd = this.zd,
+				field = this.field,
+	
+				dist = size * Math.sqrt( strength / subtract );
+	
+			if ( dist > size ) dist = size;
+	
+			for ( z = 0; z < dist; z ++ ) {
+	
+				zdiv = z / size;
+				zz = zdiv * zdiv;
+				val = strength / ( 0.0001 + zz ) - subtract;
+				if ( val > 0.0 ) {
+	
+					cz = zd * z;
+	
+					for ( y = 0; y < size; y ++ ) {
+	
+						cyz = cz + y * yd;
+	
+						for ( x = 0; x < size; x ++ )
+							field[ cyz + x ] += val;
+	
+					}
+	
+				}
+	
+			}
+	
+		};
+	
+		/////////////////////////////////////
+		// Updates
+		/////////////////////////////////////
+	
+		this.reset = function() {
+	
+			var i;
+	
+			// wipe the normal cache
+	
+			for ( i = 0; i < this.size3; i ++ ) {
+	
+				this.normal_cache[ i * 3 ] = 0.0;
+				this.field[ i ] = 0.0;
+	
+			}
+	
+		};
+	
+		this.render = function( renderCallback ) {
+	
+			this.begin();
+	
+			// Triangulate. Yeah, this is slow.
+	
+			var q, x, y, z, fx, fy, fz, y_offset, z_offset, smin2 = this.size - 2;
+	
+			for ( z = 1; z < smin2; z ++ ) {
+	
+				z_offset = this.size2 * z;
+				fz = ( z - this.halfsize ) / this.halfsize; //+ 1
+	
+				for ( y = 1; y < smin2; y ++ ) {
+	
+					y_offset = z_offset + this.size * y;
+					fy = ( y - this.halfsize ) / this.halfsize; //+ 1
+	
+					for ( x = 1; x < smin2; x ++ ) {
+	
+						fx = ( x - this.halfsize ) / this.halfsize; //+ 1
+						q = y_offset + x;
+	
+						this.polygonize( fx, fy, fz, q, this.isolation, renderCallback );
+	
+					}
+	
+				}
+	
+			}
+	
+			this.end( renderCallback );
+	
+		};
+	
+		this.generateGeometry = function() {
+	
+			var start = 0, geo = new THREE.Geometry();
+			var normals = [];
+	
+			var geo_callback = function( object ) {
+	
+				var i, x, y, z, vertex, normal,
+					face, a, b, c, na, nb, nc, nfaces;
+	
+	
+				for ( i = 0; i < object.count; i ++ ) {
+	
+					a = i * 3;
+					b = a + 1;
+					c = a + 2;
+	
+					x = object.positionArray[ a ];
+					y = object.positionArray[ b ];
+					z = object.positionArray[ c ];
+					vertex = new THREE.Vector3( x, y, z );
+	
+					x = object.normalArray[ a ];
+					y = object.normalArray[ b ];
+					z = object.normalArray[ c ];
+					normal = new THREE.Vector3( x, y, z );
+					normal.normalize();
+	
+					geo.vertices.push( vertex );
+					normals.push( normal );
+	
+				}
+	
+				nfaces = object.count / 3;
+	
+				for ( i = 0; i < nfaces; i ++ ) {
+	
+					a = ( start + i ) * 3;
+					b = a + 1;
+					c = a + 2;
+	
+					na = normals[ a ];
+					nb = normals[ b ];
+					nc = normals[ c ];
+	
+					face = new THREE.Face3( a, b, c, [ na, nb, nc ] );
+	
+					geo.faces.push( face );
+	
+				}
+	
+				start += nfaces;
+				object.count = 0;
+	
+			};
+	
+			this.render( geo_callback );
+	
+			// console.log( "generated " + geo.faces.length + " triangles" );
+	
+			return geo;
+	
+		};
+	
+		this.init( resolution );
+	
+	};
+	
+	MarchingCubes.prototype = Object.create( THREE.ImmediateRenderObject.prototype );
+	
+	
+	/////////////////////////////////////
+	// Marching cubes lookup tables
+	/////////////////////////////////////
+	
+	// These tables are straight from Paul Bourke's page:
+	// http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
+	// who in turn got them from Cory Gene Bloyd.
+	
+	THREE.edgeTable = new Int32Array([
+	0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
+	0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
+	0x190, 0x99 , 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
+	0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
+	0x230, 0x339, 0x33 , 0x13a, 0x636, 0x73f, 0x435, 0x53c,
+	0xa3c, 0xb35, 0x83f, 0x936, 0xe3a, 0xf33, 0xc39, 0xd30,
+	0x3a0, 0x2a9, 0x1a3, 0xaa , 0x7a6, 0x6af, 0x5a5, 0x4ac,
+	0xbac, 0xaa5, 0x9af, 0x8a6, 0xfaa, 0xea3, 0xda9, 0xca0,
+	0x460, 0x569, 0x663, 0x76a, 0x66 , 0x16f, 0x265, 0x36c,
+	0xc6c, 0xd65, 0xe6f, 0xf66, 0x86a, 0x963, 0xa69, 0xb60,
+	0x5f0, 0x4f9, 0x7f3, 0x6fa, 0x1f6, 0xff , 0x3f5, 0x2fc,
+	0xdfc, 0xcf5, 0xfff, 0xef6, 0x9fa, 0x8f3, 0xbf9, 0xaf0,
+	0x650, 0x759, 0x453, 0x55a, 0x256, 0x35f, 0x55 , 0x15c,
+	0xe5c, 0xf55, 0xc5f, 0xd56, 0xa5a, 0xb53, 0x859, 0x950,
+	0x7c0, 0x6c9, 0x5c3, 0x4ca, 0x3c6, 0x2cf, 0x1c5, 0xcc ,
+	0xfcc, 0xec5, 0xdcf, 0xcc6, 0xbca, 0xac3, 0x9c9, 0x8c0,
+	0x8c0, 0x9c9, 0xac3, 0xbca, 0xcc6, 0xdcf, 0xec5, 0xfcc,
+	0xcc , 0x1c5, 0x2cf, 0x3c6, 0x4ca, 0x5c3, 0x6c9, 0x7c0,
+	0x950, 0x859, 0xb53, 0xa5a, 0xd56, 0xc5f, 0xf55, 0xe5c,
+	0x15c, 0x55 , 0x35f, 0x256, 0x55a, 0x453, 0x759, 0x650,
+	0xaf0, 0xbf9, 0x8f3, 0x9fa, 0xef6, 0xfff, 0xcf5, 0xdfc,
+	0x2fc, 0x3f5, 0xff , 0x1f6, 0x6fa, 0x7f3, 0x4f9, 0x5f0,
+	0xb60, 0xa69, 0x963, 0x86a, 0xf66, 0xe6f, 0xd65, 0xc6c,
+	0x36c, 0x265, 0x16f, 0x66 , 0x76a, 0x663, 0x569, 0x460,
+	0xca0, 0xda9, 0xea3, 0xfaa, 0x8a6, 0x9af, 0xaa5, 0xbac,
+	0x4ac, 0x5a5, 0x6af, 0x7a6, 0xaa , 0x1a3, 0x2a9, 0x3a0,
+	0xd30, 0xc39, 0xf33, 0xe3a, 0x936, 0x83f, 0xb35, 0xa3c,
+	0x53c, 0x435, 0x73f, 0x636, 0x13a, 0x33 , 0x339, 0x230,
+	0xe90, 0xf99, 0xc93, 0xd9a, 0xa96, 0xb9f, 0x895, 0x99c,
+	0x69c, 0x795, 0x49f, 0x596, 0x29a, 0x393, 0x99 , 0x190,
+	0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
+	0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0])
+	
+	THREE.triTable = new Int32Array([
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 8, 3, 9, 8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 3, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	9, 2, 10, 0, 2, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	2, 8, 3, 2, 10, 8, 10, 9, 8, -1, -1, -1, -1, -1, -1, -1,
+	3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 11, 2, 8, 11, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 9, 0, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 11, 2, 1, 9, 11, 9, 8, 11, -1, -1, -1, -1, -1, -1, -1,
+	3, 10, 1, 11, 10, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 10, 1, 0, 8, 10, 8, 11, 10, -1, -1, -1, -1, -1, -1, -1,
+	3, 9, 0, 3, 11, 9, 11, 10, 9, -1, -1, -1, -1, -1, -1, -1,
+	9, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 3, 0, 7, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 9, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 1, 9, 4, 7, 1, 7, 3, 1, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 10, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	3, 4, 7, 3, 0, 4, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1,
+	9, 2, 10, 9, 0, 2, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1,
+	2, 10, 9, 2, 9, 7, 2, 7, 3, 7, 9, 4, -1, -1, -1, -1,
+	8, 4, 7, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	11, 4, 7, 11, 2, 4, 2, 0, 4, -1, -1, -1, -1, -1, -1, -1,
+	9, 0, 1, 8, 4, 7, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1,
+	4, 7, 11, 9, 4, 11, 9, 11, 2, 9, 2, 1, -1, -1, -1, -1,
+	3, 10, 1, 3, 11, 10, 7, 8, 4, -1, -1, -1, -1, -1, -1, -1,
+	1, 11, 10, 1, 4, 11, 1, 0, 4, 7, 11, 4, -1, -1, -1, -1,
+	4, 7, 8, 9, 0, 11, 9, 11, 10, 11, 0, 3, -1, -1, -1, -1,
+	4, 7, 11, 4, 11, 9, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1,
+	9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	9, 5, 4, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 5, 4, 1, 5, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	8, 5, 4, 8, 3, 5, 3, 1, 5, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 10, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	3, 0, 8, 1, 2, 10, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1,
+	5, 2, 10, 5, 4, 2, 4, 0, 2, -1, -1, -1, -1, -1, -1, -1,
+	2, 10, 5, 3, 2, 5, 3, 5, 4, 3, 4, 8, -1, -1, -1, -1,
+	9, 5, 4, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 11, 2, 0, 8, 11, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1,
+	0, 5, 4, 0, 1, 5, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1,
+	2, 1, 5, 2, 5, 8, 2, 8, 11, 4, 8, 5, -1, -1, -1, -1,
+	10, 3, 11, 10, 1, 3, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1,
+	4, 9, 5, 0, 8, 1, 8, 10, 1, 8, 11, 10, -1, -1, -1, -1,
+	5, 4, 0, 5, 0, 11, 5, 11, 10, 11, 0, 3, -1, -1, -1, -1,
+	5, 4, 8, 5, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1,
+	9, 7, 8, 5, 7, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	9, 3, 0, 9, 5, 3, 5, 7, 3, -1, -1, -1, -1, -1, -1, -1,
+	0, 7, 8, 0, 1, 7, 1, 5, 7, -1, -1, -1, -1, -1, -1, -1,
+	1, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	9, 7, 8, 9, 5, 7, 10, 1, 2, -1, -1, -1, -1, -1, -1, -1,
+	10, 1, 2, 9, 5, 0, 5, 3, 0, 5, 7, 3, -1, -1, -1, -1,
+	8, 0, 2, 8, 2, 5, 8, 5, 7, 10, 5, 2, -1, -1, -1, -1,
+	2, 10, 5, 2, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1,
+	7, 9, 5, 7, 8, 9, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1,
+	9, 5, 7, 9, 7, 2, 9, 2, 0, 2, 7, 11, -1, -1, -1, -1,
+	2, 3, 11, 0, 1, 8, 1, 7, 8, 1, 5, 7, -1, -1, -1, -1,
+	11, 2, 1, 11, 1, 7, 7, 1, 5, -1, -1, -1, -1, -1, -1, -1,
+	9, 5, 8, 8, 5, 7, 10, 1, 3, 10, 3, 11, -1, -1, -1, -1,
+	5, 7, 0, 5, 0, 9, 7, 11, 0, 1, 0, 10, 11, 10, 0, -1,
+	11, 10, 0, 11, 0, 3, 10, 5, 0, 8, 0, 7, 5, 7, 0, -1,
+	11, 10, 5, 7, 11, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 3, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	9, 0, 1, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 8, 3, 1, 9, 8, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1,
+	1, 6, 5, 2, 6, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 6, 5, 1, 2, 6, 3, 0, 8, -1, -1, -1, -1, -1, -1, -1,
+	9, 6, 5, 9, 0, 6, 0, 2, 6, -1, -1, -1, -1, -1, -1, -1,
+	5, 9, 8, 5, 8, 2, 5, 2, 6, 3, 2, 8, -1, -1, -1, -1,
+	2, 3, 11, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	11, 0, 8, 11, 2, 0, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 9, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1,
+	5, 10, 6, 1, 9, 2, 9, 11, 2, 9, 8, 11, -1, -1, -1, -1,
+	6, 3, 11, 6, 5, 3, 5, 1, 3, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 11, 0, 11, 5, 0, 5, 1, 5, 11, 6, -1, -1, -1, -1,
+	3, 11, 6, 0, 3, 6, 0, 6, 5, 0, 5, 9, -1, -1, -1, -1,
+	6, 5, 9, 6, 9, 11, 11, 9, 8, -1, -1, -1, -1, -1, -1, -1,
+	5, 10, 6, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 3, 0, 4, 7, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1,
+	1, 9, 0, 5, 10, 6, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1,
+	10, 6, 5, 1, 9, 7, 1, 7, 3, 7, 9, 4, -1, -1, -1, -1,
+	6, 1, 2, 6, 5, 1, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 5, 5, 2, 6, 3, 0, 4, 3, 4, 7, -1, -1, -1, -1,
+	8, 4, 7, 9, 0, 5, 0, 6, 5, 0, 2, 6, -1, -1, -1, -1,
+	7, 3, 9, 7, 9, 4, 3, 2, 9, 5, 9, 6, 2, 6, 9, -1,
+	3, 11, 2, 7, 8, 4, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1,
+	5, 10, 6, 4, 7, 2, 4, 2, 0, 2, 7, 11, -1, -1, -1, -1,
+	0, 1, 9, 4, 7, 8, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1,
+	9, 2, 1, 9, 11, 2, 9, 4, 11, 7, 11, 4, 5, 10, 6, -1,
+	8, 4, 7, 3, 11, 5, 3, 5, 1, 5, 11, 6, -1, -1, -1, -1,
+	5, 1, 11, 5, 11, 6, 1, 0, 11, 7, 11, 4, 0, 4, 11, -1,
+	0, 5, 9, 0, 6, 5, 0, 3, 6, 11, 6, 3, 8, 4, 7, -1,
+	6, 5, 9, 6, 9, 11, 4, 7, 9, 7, 11, 9, -1, -1, -1, -1,
+	10, 4, 9, 6, 4, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 10, 6, 4, 9, 10, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1,
+	10, 0, 1, 10, 6, 0, 6, 4, 0, -1, -1, -1, -1, -1, -1, -1,
+	8, 3, 1, 8, 1, 6, 8, 6, 4, 6, 1, 10, -1, -1, -1, -1,
+	1, 4, 9, 1, 2, 4, 2, 6, 4, -1, -1, -1, -1, -1, -1, -1,
+	3, 0, 8, 1, 2, 9, 2, 4, 9, 2, 6, 4, -1, -1, -1, -1,
+	0, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	8, 3, 2, 8, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1,
+	10, 4, 9, 10, 6, 4, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 2, 2, 8, 11, 4, 9, 10, 4, 10, 6, -1, -1, -1, -1,
+	3, 11, 2, 0, 1, 6, 0, 6, 4, 6, 1, 10, -1, -1, -1, -1,
+	6, 4, 1, 6, 1, 10, 4, 8, 1, 2, 1, 11, 8, 11, 1, -1,
+	9, 6, 4, 9, 3, 6, 9, 1, 3, 11, 6, 3, -1, -1, -1, -1,
+	8, 11, 1, 8, 1, 0, 11, 6, 1, 9, 1, 4, 6, 4, 1, -1,
+	3, 11, 6, 3, 6, 0, 0, 6, 4, -1, -1, -1, -1, -1, -1, -1,
+	6, 4, 8, 11, 6, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	7, 10, 6, 7, 8, 10, 8, 9, 10, -1, -1, -1, -1, -1, -1, -1,
+	0, 7, 3, 0, 10, 7, 0, 9, 10, 6, 7, 10, -1, -1, -1, -1,
+	10, 6, 7, 1, 10, 7, 1, 7, 8, 1, 8, 0, -1, -1, -1, -1,
+	10, 6, 7, 10, 7, 1, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 6, 1, 6, 8, 1, 8, 9, 8, 6, 7, -1, -1, -1, -1,
+	2, 6, 9, 2, 9, 1, 6, 7, 9, 0, 9, 3, 7, 3, 9, -1,
+	7, 8, 0, 7, 0, 6, 6, 0, 2, -1, -1, -1, -1, -1, -1, -1,
+	7, 3, 2, 6, 7, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	2, 3, 11, 10, 6, 8, 10, 8, 9, 8, 6, 7, -1, -1, -1, -1,
+	2, 0, 7, 2, 7, 11, 0, 9, 7, 6, 7, 10, 9, 10, 7, -1,
+	1, 8, 0, 1, 7, 8, 1, 10, 7, 6, 7, 10, 2, 3, 11, -1,
+	11, 2, 1, 11, 1, 7, 10, 6, 1, 6, 7, 1, -1, -1, -1, -1,
+	8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6, -1,
+	0, 9, 1, 11, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1,
+	7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	3, 0, 8, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 9, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	8, 1, 9, 8, 3, 1, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1,
+	10, 1, 2, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 10, 3, 0, 8, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1,
+	2, 9, 0, 2, 10, 9, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1,
+	6, 11, 7, 2, 10, 3, 10, 8, 3, 10, 9, 8, -1, -1, -1, -1,
+	7, 2, 3, 6, 2, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	7, 0, 8, 7, 6, 0, 6, 2, 0, -1, -1, -1, -1, -1, -1, -1,
+	2, 7, 6, 2, 3, 7, 0, 1, 9, -1, -1, -1, -1, -1, -1, -1,
+	1, 6, 2, 1, 8, 6, 1, 9, 8, 8, 7, 6, -1, -1, -1, -1,
+	10, 7, 6, 10, 1, 7, 1, 3, 7, -1, -1, -1, -1, -1, -1, -1,
+	10, 7, 6, 1, 7, 10, 1, 8, 7, 1, 0, 8, -1, -1, -1, -1,
+	0, 3, 7, 0, 7, 10, 0, 10, 9, 6, 10, 7, -1, -1, -1, -1,
+	7, 6, 10, 7, 10, 8, 8, 10, 9, -1, -1, -1, -1, -1, -1, -1,
+	6, 8, 4, 11, 8, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	3, 6, 11, 3, 0, 6, 0, 4, 6, -1, -1, -1, -1, -1, -1, -1,
+	8, 6, 11, 8, 4, 6, 9, 0, 1, -1, -1, -1, -1, -1, -1, -1,
+	9, 4, 6, 9, 6, 3, 9, 3, 1, 11, 3, 6, -1, -1, -1, -1,
+	6, 8, 4, 6, 11, 8, 2, 10, 1, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 10, 3, 0, 11, 0, 6, 11, 0, 4, 6, -1, -1, -1, -1,
+	4, 11, 8, 4, 6, 11, 0, 2, 9, 2, 10, 9, -1, -1, -1, -1,
+	10, 9, 3, 10, 3, 2, 9, 4, 3, 11, 3, 6, 4, 6, 3, -1,
+	8, 2, 3, 8, 4, 2, 4, 6, 2, -1, -1, -1, -1, -1, -1, -1,
+	0, 4, 2, 4, 6, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 9, 0, 2, 3, 4, 2, 4, 6, 4, 3, 8, -1, -1, -1, -1,
+	1, 9, 4, 1, 4, 2, 2, 4, 6, -1, -1, -1, -1, -1, -1, -1,
+	8, 1, 3, 8, 6, 1, 8, 4, 6, 6, 10, 1, -1, -1, -1, -1,
+	10, 1, 0, 10, 0, 6, 6, 0, 4, -1, -1, -1, -1, -1, -1, -1,
+	4, 6, 3, 4, 3, 8, 6, 10, 3, 0, 3, 9, 10, 9, 3, -1,
+	10, 9, 4, 6, 10, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 9, 5, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 3, 4, 9, 5, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1,
+	5, 0, 1, 5, 4, 0, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1,
+	11, 7, 6, 8, 3, 4, 3, 5, 4, 3, 1, 5, -1, -1, -1, -1,
+	9, 5, 4, 10, 1, 2, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1,
+	6, 11, 7, 1, 2, 10, 0, 8, 3, 4, 9, 5, -1, -1, -1, -1,
+	7, 6, 11, 5, 4, 10, 4, 2, 10, 4, 0, 2, -1, -1, -1, -1,
+	3, 4, 8, 3, 5, 4, 3, 2, 5, 10, 5, 2, 11, 7, 6, -1,
+	7, 2, 3, 7, 6, 2, 5, 4, 9, -1, -1, -1, -1, -1, -1, -1,
+	9, 5, 4, 0, 8, 6, 0, 6, 2, 6, 8, 7, -1, -1, -1, -1,
+	3, 6, 2, 3, 7, 6, 1, 5, 0, 5, 4, 0, -1, -1, -1, -1,
+	6, 2, 8, 6, 8, 7, 2, 1, 8, 4, 8, 5, 1, 5, 8, -1,
+	9, 5, 4, 10, 1, 6, 1, 7, 6, 1, 3, 7, -1, -1, -1, -1,
+	1, 6, 10, 1, 7, 6, 1, 0, 7, 8, 7, 0, 9, 5, 4, -1,
+	4, 0, 10, 4, 10, 5, 0, 3, 10, 6, 10, 7, 3, 7, 10, -1,
+	7, 6, 10, 7, 10, 8, 5, 4, 10, 4, 8, 10, -1, -1, -1, -1,
+	6, 9, 5, 6, 11, 9, 11, 8, 9, -1, -1, -1, -1, -1, -1, -1,
+	3, 6, 11, 0, 6, 3, 0, 5, 6, 0, 9, 5, -1, -1, -1, -1,
+	0, 11, 8, 0, 5, 11, 0, 1, 5, 5, 6, 11, -1, -1, -1, -1,
+	6, 11, 3, 6, 3, 5, 5, 3, 1, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 10, 9, 5, 11, 9, 11, 8, 11, 5, 6, -1, -1, -1, -1,
+	0, 11, 3, 0, 6, 11, 0, 9, 6, 5, 6, 9, 1, 2, 10, -1,
+	11, 8, 5, 11, 5, 6, 8, 0, 5, 10, 5, 2, 0, 2, 5, -1,
+	6, 11, 3, 6, 3, 5, 2, 10, 3, 10, 5, 3, -1, -1, -1, -1,
+	5, 8, 9, 5, 2, 8, 5, 6, 2, 3, 8, 2, -1, -1, -1, -1,
+	9, 5, 6, 9, 6, 0, 0, 6, 2, -1, -1, -1, -1, -1, -1, -1,
+	1, 5, 8, 1, 8, 0, 5, 6, 8, 3, 8, 2, 6, 2, 8, -1,
+	1, 5, 6, 2, 1, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 3, 6, 1, 6, 10, 3, 8, 6, 5, 6, 9, 8, 9, 6, -1,
+	10, 1, 0, 10, 0, 6, 9, 5, 0, 5, 6, 0, -1, -1, -1, -1,
+	0, 3, 8, 5, 6, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	10, 5, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	11, 5, 10, 7, 5, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	11, 5, 10, 11, 7, 5, 8, 3, 0, -1, -1, -1, -1, -1, -1, -1,
+	5, 11, 7, 5, 10, 11, 1, 9, 0, -1, -1, -1, -1, -1, -1, -1,
+	10, 7, 5, 10, 11, 7, 9, 8, 1, 8, 3, 1, -1, -1, -1, -1,
+	11, 1, 2, 11, 7, 1, 7, 5, 1, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 3, 1, 2, 7, 1, 7, 5, 7, 2, 11, -1, -1, -1, -1,
+	9, 7, 5, 9, 2, 7, 9, 0, 2, 2, 11, 7, -1, -1, -1, -1,
+	7, 5, 2, 7, 2, 11, 5, 9, 2, 3, 2, 8, 9, 8, 2, -1,
+	2, 5, 10, 2, 3, 5, 3, 7, 5, -1, -1, -1, -1, -1, -1, -1,
+	8, 2, 0, 8, 5, 2, 8, 7, 5, 10, 2, 5, -1, -1, -1, -1,
+	9, 0, 1, 5, 10, 3, 5, 3, 7, 3, 10, 2, -1, -1, -1, -1,
+	9, 8, 2, 9, 2, 1, 8, 7, 2, 10, 2, 5, 7, 5, 2, -1,
+	1, 3, 5, 3, 7, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 7, 0, 7, 1, 1, 7, 5, -1, -1, -1, -1, -1, -1, -1,
+	9, 0, 3, 9, 3, 5, 5, 3, 7, -1, -1, -1, -1, -1, -1, -1,
+	9, 8, 7, 5, 9, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	5, 8, 4, 5, 10, 8, 10, 11, 8, -1, -1, -1, -1, -1, -1, -1,
+	5, 0, 4, 5, 11, 0, 5, 10, 11, 11, 3, 0, -1, -1, -1, -1,
+	0, 1, 9, 8, 4, 10, 8, 10, 11, 10, 4, 5, -1, -1, -1, -1,
+	10, 11, 4, 10, 4, 5, 11, 3, 4, 9, 4, 1, 3, 1, 4, -1,
+	2, 5, 1, 2, 8, 5, 2, 11, 8, 4, 5, 8, -1, -1, -1, -1,
+	0, 4, 11, 0, 11, 3, 4, 5, 11, 2, 11, 1, 5, 1, 11, -1,
+	0, 2, 5, 0, 5, 9, 2, 11, 5, 4, 5, 8, 11, 8, 5, -1,
+	9, 4, 5, 2, 11, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	2, 5, 10, 3, 5, 2, 3, 4, 5, 3, 8, 4, -1, -1, -1, -1,
+	5, 10, 2, 5, 2, 4, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1,
+	3, 10, 2, 3, 5, 10, 3, 8, 5, 4, 5, 8, 0, 1, 9, -1,
+	5, 10, 2, 5, 2, 4, 1, 9, 2, 9, 4, 2, -1, -1, -1, -1,
+	8, 4, 5, 8, 5, 3, 3, 5, 1, -1, -1, -1, -1, -1, -1, -1,
+	0, 4, 5, 1, 0, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	8, 4, 5, 8, 5, 3, 9, 0, 5, 0, 3, 5, -1, -1, -1, -1,
+	9, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 11, 7, 4, 9, 11, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1,
+	0, 8, 3, 4, 9, 7, 9, 11, 7, 9, 10, 11, -1, -1, -1, -1,
+	1, 10, 11, 1, 11, 4, 1, 4, 0, 7, 4, 11, -1, -1, -1, -1,
+	3, 1, 4, 3, 4, 8, 1, 10, 4, 7, 4, 11, 10, 11, 4, -1,
+	4, 11, 7, 9, 11, 4, 9, 2, 11, 9, 1, 2, -1, -1, -1, -1,
+	9, 7, 4, 9, 11, 7, 9, 1, 11, 2, 11, 1, 0, 8, 3, -1,
+	11, 7, 4, 11, 4, 2, 2, 4, 0, -1, -1, -1, -1, -1, -1, -1,
+	11, 7, 4, 11, 4, 2, 8, 3, 4, 3, 2, 4, -1, -1, -1, -1,
+	2, 9, 10, 2, 7, 9, 2, 3, 7, 7, 4, 9, -1, -1, -1, -1,
+	9, 10, 7, 9, 7, 4, 10, 2, 7, 8, 7, 0, 2, 0, 7, -1,
+	3, 7, 10, 3, 10, 2, 7, 4, 10, 1, 10, 0, 4, 0, 10, -1,
+	1, 10, 2, 8, 7, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 9, 1, 4, 1, 7, 7, 1, 3, -1, -1, -1, -1, -1, -1, -1,
+	4, 9, 1, 4, 1, 7, 0, 8, 1, 8, 7, 1, -1, -1, -1, -1,
+	4, 0, 3, 7, 4, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	4, 8, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	9, 10, 8, 10, 11, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	3, 0, 9, 3, 9, 11, 11, 9, 10, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 10, 0, 10, 8, 8, 10, 11, -1, -1, -1, -1, -1, -1, -1,
+	3, 1, 10, 11, 3, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 2, 11, 1, 11, 9, 9, 11, 8, -1, -1, -1, -1, -1, -1, -1,
+	3, 0, 9, 3, 9, 11, 1, 2, 9, 2, 11, 9, -1, -1, -1, -1,
+	0, 2, 11, 8, 0, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	3, 2, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	2, 3, 8, 2, 8, 10, 10, 8, 9, -1, -1, -1, -1, -1, -1, -1,
+	9, 10, 2, 0, 9, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	2, 3, 8, 2, 8, 10, 0, 1, 8, 1, 10, 8, -1, -1, -1, -1,
+	1, 10, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	1, 3, 8, 9, 1, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]);
+	
+	module.exports = MarchingCubes;
+
+
+/***/ },
+/* 11 */
+/*!***********************!*\
+  !*** ./src/config.js ***!
+  \***********************/
+/***/ function(module, exports) {
+
+	/* Project configuration */
+	
+	module.exports = {
+	  dotRadius: 10,
+	  showCircles:true,
+	  showMetaBalls:false
+	
+	};
+
+
+/***/ },
+/* 12 */
+/*!**********************!*\
+  !*** ./src/model.js ***!
+  \**********************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var THREE = __webpack_require__(/*! three */ 2);
+	var cats = __webpack_require__(/*! ./data/cats */ 13);
+	var depts = __webpack_require__(/*! ./data/phillyBudgetDeptAndCat */ 14);
+	
+	
+	var catsById = {};
+	cats.forEach(function(cat, i) {
+	  cat.x = -500 + 200 * i;
+	  cat.colorObj = new THREE.Color(cat.color);
+	  cat.depts = [];
+	  cat.cid = i;
+	  cat.t = 0;
+	  catsById[cat.id] = cat;
+	
+	});
+	
+	
+	var dotValue = 5000000;
+	var totalDots = 0;
+	var totalBudget = 0;
+	depts.forEach(function(dept, i) {
+	  var cat = catsById[dept.c] || catsById.other;
+	  dept.cat = cat;
+	  dept.did = i; //for fast lookup
+	  dept.dn = dept.sn || dept.n, //display name: short name if avail
+	  cat.depts.push(dept);
+	  cat.t += dept.t;
+	
+	  var dots = Math.round(dept.t / dotValue);
+	  totalDots += dots;
+	  totalBudget += dept.t;
+	  //var col = i % 10;
+	  //var row = Math.floor(i/10);
+	
+	});
+	
+	var nodes = [];
+	
+	depts.forEach(function(dept, did) {
+	  var count = Math.round(dept.t / dotValue);
+	
+	  for (var j = 0; j < count; j++) {
+	    var node = {
+	      x: Math.random() * 1000 - 500,
+	      y: Math.random() * 1000 - 500,
+	      z: 0,
+	      nid: nodes.length,
+	      did: did
+	    };
+	    nodes.push(node);
+	  }
+	});
+	
+	function sortScore(node){
+	  var dept = depts[node.did];
+	  return dept.cat.x * 100000000 - dept.t;
+	}
+	nodes.sort(function(a,b){
+	  return sortScore(a) - sortScore(b);
+	});
+	
+	
+	module.exports = {
+	  cats: cats,
+	  catsById: catsById,
+	  depts: depts,
+	  totalDots: totalDots,
+	  dotValue: dotValue,
+	  nodes: nodes,
+	  totalBudget: totalBudget,
+	
+	};
+
+
+/***/ },
+/* 13 */
+/*!**************************!*\
+  !*** ./src/data/cats.js ***!
+  \**************************/
+/***/ function(module, exports) {
+
+	module.exports = [
+	{
+	  id: "lawFire",
+	  name: "Law & Fire",
+	  color: 0x16a8cd
+	}, {
+	  id: "healthHuman",
+	  name: "Health & Human Services",
+	  color: 0x775df8
+	
+	}, {
+	  id: "housing",
+	  name: "Housing",
+	  color: 0xb579d8
+	
+	
+	}, {
+	  id: "infastructure",
+	  name: "Infastructure",
+	  color: 0xb8aa95
+	},
+	{
+	  id: "money",
+	  name: "Money Matters",
+	  color: 0x5fa482
+	},
+	/*
+	{
+	  id: "artCulture",
+	  name: "Art & Culture",
+	  color: 0xb0b0b0
+	},
+	*/
+	
+	{
+	  id: "other",
+	  name: "Other / Misc",
+	  color: 0xb0b0b0
+	},
+	];
+
+
+/***/ },
+/* 14 */
 /*!********************************************!*\
   !*** ./src/data/phillyBudgetDeptAndCat.js ***!
   \********************************************/
 /***/ function(module, exports) {
 
 	module.exports = [
-	  {n:"Art Museum", t:2550000, c:""},
-	  {n:"Atwater Kent Museum", t:294817, c:""},
-	  {n:"Auditing", t:8681961, c:""},
-	  {n:"Board of Ethics", t:1071403, c:""},
-	  {n:"Board of Revision of Taxes", t:855554, c:""},
-	  {n:"City Commissioners", t:10577785, c:""},
-	  {n:"City Council", t:16725293, c:""},
-	  {n:"City Planning Commission", t:3298476, c:""},
-	  {n:"City Representative", t:1010111, c:""},
-	  {n:"City Treasurer", t:1180726, c:""},
-	  {n:"Civil Service Commission", t:10179476, c:""},
-	  {n:"Commerce", t:279192685, c:""},
-	  {n:"Commerce - Convention Center Subsidy", t:15000000, c:""},
-	  {n:"Commerce - Economic Stimulus", t:3294448, c:""},
-	  {n:"District Attorney", t:52327746, c:"lawFire"},
-	  {n:"Finance", t:240416162, c:""},
-	  {n:"Finance - Community College Subsidy", t:28909207, c:""},
-	  {n:"Finance - Employee Benefits", t:1407794754, c:""},
-	  {n:"Finance - Hero Scholarship Awards", t:25000, c:""},
-	  {n:"Finance - Indemnities", t:49687000, c:""},
-	  {n:"Finance - Refunds", t:250000, c:""},
-	  {n:"Finance - School District Contribution", t:104263617, c:""},
-	  {n:"Finance - Witness Fees", t:171518, c:""},
-	  {n:"Fire", t:251357893, c:"lawFire"},
-	  {n:"First Judicial District", t:157913324, c:"lawFire"},
-	  {n:"Fleet Management", t:78124032, c:""},
-	  {n:"Free Library", t:48351919, c:""},
-	  {n:"Historical Commission", t:431732, c:""},
-	  {n:"Human Relations Commission", t:2190207, c:""},
-	  {n:"Human Services", t:671178545, c:"healthHuman"},
-	  {n:"L&I  - Board of Building Standards", t:75419, c:""},
-	  {n:"L&I  - Board of L&I Review", t:169637, c:""},
-	  {n:"L&I  - Zoning Board of Adjustment", t:372290, c:""},
-	  {n:"Labor Relations", t:996229, c:""},
-	  {n:"Law", t:22008781, c:"lawFire"},
-	  {n:"Licenses and Inspections", t:38626937, c:""},
-	  {n:"Managing Director's Office", t:91754975, c:""},
-	  {n:"Mayor - Office of Community Schools & Universal Pre - K", t:29702500, c:""},
-	  {n:"Mayor - Office of the CAO", t:4629445, c:""},
-	  {n:"Mayor - Planning and Development", t:1016000, c:""},
-	  {n:"Mayor's Office", t:5296730, c:""},
-	  {n:"Mayor's Office - Scholarships", t:200000, c:""},
-	  {n:"Mayor's Office of Community Empowerment and Opportunity", t:16836290, c:""},
-	  {n:"Mayor's Office of Transportation & Utilities", t:0, c:""},
-	  {n:"Mural Arts Program", t:1616016, c:""},
-	  {n:"Office of Arts and Culture", t:4172855, c:""},
-	  {n:"Office of Behavioral Health and Intellectual disAbilities", t:1577373138, c:"healthHuman"},
-	  {n:"Office of Housing and Community Development", t:203666559, c:"housing"},
-	  {n:"Office of Human Resources", t:6275580, c:""},
-	  {n:"Office of Innovation and Technology", t:160433738, c:""},
-	  {n:"Office of Property Assessment", t:12794865, c:""},
-	  {n:"Office of Supportive Housing", t:93509923, c:"housing"},
-	  {n:"Office of Sustainability", t:1063074, c:""},
-	  {n:"Office of the Inspector General", t:1668811, c:""},
-	  {n:"Parks and Recreation", t:69906565, c:""},
-	  {n:"Police", t:686928944, c:"lawFire"},
-	  {n:"Prisons", t:258861670, c:"lawFire"},
-	  {n:"Procurement", t:4951818, c:""},
-	  {n:"Public Health", t:366770842, c:"healthHuman"},
-	  {n:"Public Property", t:144170392, c:""},
-	  {n:"Public Property - SEPTA Subsidy", t:79720000, c:""},
-	  {n:"Records", t:4767214, c:""},
-	  {n:"Register of Wills", t:3672195, c:""},
-	  {n:"Revenue", t:70164685, c:""},
-	  {n:"Sheriff", t:20142275, c:"lawFire"},
-	  {n:"Sinking Fund Commission (Debt Service)", t:630587744, c:""},
-	  {n:"Streets", t:188580192, c:"infastructure"},
-	  {n:"Water", t:418837280, c:"infastructure"},
-	  {n:"Youth Commission", t:0, c:""}
+	{n:"Art Museum", sn:"", t:2550000, c:"artCulture"},
+	{n:"Atwater Kent Museum", sn:"", t:294817, c:"artCulture"},
+	{n:"Auditing", sn:"", t:8681961, c:"money"},
+	{n:"Board of Ethics", sn:"", t:1071403, c:""},
+	{n:"Board of Revision of Taxes", sn:"", t:855554, c:"money"},
+	{n:"City Commissioners", sn:"", t:10577785, c:""},
+	{n:"City Council", sn:"", t:16725293, c:""},
+	{n:"City Planning Commission", sn:"", t:3298476, c:""},
+	{n:"City Representative", sn:"", t:1010111, c:""},
+	{n:"City Treasurer", sn:"", t:1180726, c:"money"},
+	{n:"Civil Service Commission", sn:"", t:10179476, c:""},
+	{n:"Commerce", sn:"", t:279192685, c:""},
+	{n:"Commerce - Convention Center Subsidy", sn:"", t:15000000, c:""},
+	{n:"Commerce - Economic Stimulus", sn:"", t:3294448, c:"money"},
+	{n:"District Attorney", sn:"", t:52327746, c:"lawFire"},
+	{n:"Finance", sn:"", t:240416162, c:"money"},
+	{n:"Finance - Community College Subsidy", sn:"Community College Subsidy", t:28909207, c:""},
+	{n:"Finance - Employee Benefits", sn:"Employee Benefits", t:1407794754, c:"money"},
+	{n:"Finance - Hero Scholarship Awards", sn:"", t:25000, c:""},
+	{n:"Finance - Indemnities", sn:"", t:49687000, c:"money"},
+	{n:"Finance - Refunds", sn:"", t:250000, c:"money"},
+	{n:"Finance - School District Contribution", sn:"School District Contribution", t:104263617, c:""},
+	{n:"Finance - Witness Fees", sn:"Witness Fees", t:171518, c:"lawFire"},
+	{n:"Fire", sn:"", t:251357893, c:"lawFire"},
+	{n:"First Judicial District", sn:"", t:157913324, c:"lawFire"},
+	{n:"Fleet Management", sn:"", t:78124032, c:""},
+	{n:"Free Library", sn:"", t:48351919, c:""},
+	{n:"Historical Commission", sn:"", t:431732, c:""},
+	{n:"Human Relations Commission", sn:"", t:2190207, c:""},
+	{n:"Human Services", sn:"", t:671178545, c:"healthHuman"},
+	{n:"L&I  - Board of Building Standards", sn:"Board of Building Standards", t:75419, c:""},
+	{n:"L&I  - Board of L&I Review", sn:"Board of L&I Review", t:169637, c:""},
+	{n:"L&I  - Zoning Board of Adjustment", sn:"Zoning Board of Adjustment", t:372290, c:""},
+	{n:"Labor Relations", sn:"", t:996229, c:""},
+	{n:"Law", sn:"", t:22008781, c:"lawFire"},
+	{n:"Licenses and Inspections", sn:"", t:38626937, c:""},
+	{n:"Managing Director's Office", sn:"", t:91754975, c:""},
+	{n:"Mayor - Office of Community Schools & Universal Pre - K", sn:"Community Schools & Universal Pre - K", t:29702500, c:""},
+	{n:"Mayor - Office of the CAO", sn:"", t:4629445, c:""},
+	{n:"Mayor - Planning and Development", sn:"", t:1016000, c:""},
+	{n:"Mayor's Office", sn:"", t:5296730, c:""},
+	{n:"Mayor's Office - Scholarships", sn:"", t:200000, c:""},
+	{n:"Mayor's Office of Community Empowerment and Opportunity", sn:"Community Empowerment & Opp", t:16836290, c:""},
+	{n:"Mayor's Office of Transportation & Utilities", sn:"", t:0, c:""},
+	{n:"Mural Arts Program", sn:"", t:1616016, c:"artCulture"},
+	{n:"Office of Arts and Culture", sn:"", t:4172855, c:"artCulture"},
+	{n:"Office of Behavioral Health and Intellectual disAbilities", sn:"Behavioral Health", t:1577373138, c:"healthHuman"},
+	{n:"Office of Housing and Community Development", sn:"Housing & Community Dev", t:203666559, c:"housing"},
+	{n:"Office of Human Resources", sn:"", t:6275580, c:""},
+	{n:"Office of Innovation and Technology", sn:"Innovation and Technology", t:160433738, c:""},
+	{n:"Office of Property Assessment", sn:"", t:12794865, c:""},
+	{n:"Office of Supportive Housing", sn:"Supportive Housing", t:93509923, c:"housing"},
+	{n:"Office of Sustainability", sn:"", t:1063074, c:""},
+	{n:"Office of the Inspector General", sn:"", t:1668811, c:""},
+	{n:"Parks and Recreation", sn:"", t:69906565, c:""},
+	{n:"Police", sn:"", t:686928944, c:"lawFire"},
+	{n:"Prisons", sn:"", t:258861670, c:"lawFire"},
+	{n:"Procurement", sn:"", t:4951818, c:"money"},
+	{n:"Public Health", sn:"", t:366770842, c:"healthHuman"},
+	{n:"Public Property", sn:"", t:144170392, c:""},
+	{n:"Public Property - SEPTA Subsidy", sn:"SEPTA Subsidy", t:79720000, c:""},
+	{n:"Records", sn:"", t:4767214, c:""},
+	{n:"Register of Wills", sn:"", t:3672195, c:""},
+	{n:"Revenue", sn:"", t:70164685, c:"money"},
+	{n:"Sheriff", sn:"", t:20142275, c:"lawFire"},
+	{n:"Sinking Fund Commission (Debt Service)", sn:"Debt Service", t:630587744, c:"money"},
+	{n:"Streets", sn:"", t:188580192, c:"infastructure"},
+	{n:"Water", sn:"", t:418837280, c:"infastructure"},
+	{n:"Youth Commission", sn:"", t:0, c:""},
 	];
 
 
 /***/ },
-/* 6 */
-/*!***************************************!*\
-  !*** ./src/neilviz/CircleMaterial.js ***!
-  \***************************************/
+/* 15 */
+/*!***********************!*\
+  !*** ./src/states.js ***!
+  \***********************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var model = __webpack_require__(/*! ./model */ 12);
+	
+	var catsById = model.catsById;
+	var depts = model.depts;
+	var cats = model.cats;
+	var dotValue = model.dotValue;
+	var totalDots = model.totalDots;
+	var nodes = model.nodes;
+	
+	//TODO: move to util file
+	function hexToRgbArray(hex) {
+	  hex = Math.floor( hex );
+	
+	  return [
+	        ( hex >> 16 & 255 ) / 255,
+	        ( hex >> 8 & 255 ) / 255,
+	        ( hex & 255 ) / 255
+	    ];
+	
+	}
+	
+	
+	var textItems = __webpack_require__(/*! ./textItems */ 16);
+	
+	
+	var states = {};
+	
+	
+	// *********************
+	//   Make each state...
+	//   Every state has:
+	//      1)  array of focis (points where balls gravitate towards)
+	//      2)  array of nodes, that correspond to balls and indicate which foci they are linked to
+	//      3)  array of text objects that
+	//   It's probably a good idea to makes states immutable, meaning they don't include functions
+	//   or refernces to other objects, which is why the nodes refernce the focis by numeric id
+	//   not actual refernces.
+	// *********************
+	
+	states.wholeCity = function() {
+	  // state
+	  var foci = {
+	    x: 0,
+	    y: 0,
+	    distSq: model.totalBudget * 0.0000035
+	  };
+	  var state = {
+	    focis: [foci],
+	    nodes: []
+	  };
+	
+	  nodes.forEach(function(node,i){
+	    state.nodes.push({
+	      foci:foci,
+	      nid: i,
+	      color: hexToRgbArray(0x333333)
+	    });
+	  });
+	
+	  return state;
+	
+	}();
+	
+	
+	
+	
+	states.deptByCat = function() {
+	  // state
+	  var state = {
+	    focis: [],
+	    nodes: []
+	  };
+	
+	  var deptFoci = []; //for this state, assigns a foci to each dept
+	
+	  cats.forEach(function(cat) {
+	    cat.depts.sort(function(a, b) {
+	      return b.t - a.t;
+	    });
+	    yC = 100;
+	    cat.depts.forEach(function(dept) {
+	      var foci = {
+	        x: cat.x,
+	        y: yC,
+	        distSq: dept.t * 0.0000035
+	
+	      };
+	      //temp
+	      if (textItems['dept_t_' + dept.did]){
+	        textItems['dept_t_' + dept.did].position.x = cat.x;
+	        textItems['dept_t_' + dept.did].position.y = yC;
+	        textItems['dept_n_' + dept.did].position.x = cat.x;
+	        textItems['dept_n_' + dept.did].position.y = yC;
+	
+	      }
+	
+	      state.focis.push(foci);
+	      deptFoci[dept.did] = foci;
+	      yC -= Math.sqrt(dept.t) * 0.0035 + 30;
+	    });
+	  });
+	
+	  nodes.forEach(function(node, i) {
+	    state.nodes.push({
+	      nid: i,
+	      foci: deptFoci[node.did],
+	      color: hexToRgbArray(depts[node.did].cat.color)
+	    });
+	  });
+	
+	  return state;
+	}();
+	
+	states.catTotals = function() {
+	  // state
+	  var state = {
+	    focis: [],
+	    nodes: []
+	  };
+	
+	  var catFoci = []; //for this state, assigns a foci to each dept
+	
+	  cats.forEach(function(cat) {
+	
+	    var foci = {
+	        x: cat.x,
+	        y: 10,
+	        distSq: cat.t * 0.0000035
+	
+	      };
+	      state.focis.push(foci);
+	      catFoci[cat.cid] = foci;
+	
+	      //temp
+	      if (textItems['cat_t_' + cat.cid]){
+	        textItems['cat_t_' + cat.cid].position.x = cat.x;
+	        textItems['cat_t_' + cat.cid].position.y = 10;
+	        textItems['cat_n_' + cat.cid].position.x = cat.x;
+	        textItems['cat_n_' + cat.cid].position.y = 10;
+	
+	      }
+	  });
+	
+	  nodes.forEach(function(node, i) {
+	    state.nodes.push({
+	      nid: i,
+	      foci: catFoci[depts[node.did].cat.cid],
+	      color: hexToRgbArray(depts[node.did].cat.color)
+	    });
+	  });
+	
+	  return state;
+	}();
+	
+	
+	module.exports = states;
+
+
+/***/ },
+/* 16 */
+/*!**************************!*\
+  !*** ./src/textItems.js ***!
+  \**************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var BufferedTextSDF = __webpack_require__(/*! ./neilviz/BufferedTextSDF */ 17);
+	
+	
+	var model = __webpack_require__(/*! ./model */ 12);
+	var cats = model.cats;
+	var depts = model.depts;
+	
+	var textItems ={
+	  phillyTotal: new BufferedTextSDF({items:[{text: '$ ' + (model.totalBudget/1000000000).toFixed(1) , y:40,fontSize:80},
+	                                {text: 'BILLION', y:-30, fontSize:50}]})
+	};
+	
+	cats.forEach(function(cat){
+	  scale = Math.sqrt(cat.t/1000000000);
+	  textItems['cat_t_' + cat.cid] =  new BufferedTextSDF({items:[{text: '$ ' + (cat.t/1000000).toFixed(0) , y:20* scale,fontSize:30 * scale},
+	                                {text: 'MILLION', y:-10* scale, fontSize:20* scale}]});
+	  textItems['cat_n_' + cat.cid] =  new BufferedTextSDF({items:[{text: cat.name.substring(0,22) , y:-72* scale,fontSize:18 * scale}],color:0x000000});
+	
+	});
+	depts.forEach(function(dept){
+	  var scale = Math.sqrt(dept.t/1000000000);
+	  var underScale = Math.max(0.6,scale);
+	  textItems['dept_t_' + dept.did] =  new BufferedTextSDF({items:[{text: '$ ' + (dept.t/1000000).toFixed(0) , y:20* scale,fontSize:30 * scale},
+	                                {text: 'MILLION', y:-10* scale, fontSize:20* scale}]});
+	  textItems['dept_n_' + dept.did] =  new BufferedTextSDF({items:[{text: dept.dn.substring(0,22) , y:-72* scale,fontSize:18 * underScale}],color:0x000000});
+	
+	});
+	
+	
+	module.exports = textItems;
+
+
+/***/ },
+/* 17 */
+/*!****************************************!*\
+  !*** ./src/neilviz/BufferedTextSDF.js ***!
+  \****************************************/
+/***/ function(module, exports, __webpack_require__) {
+
+	var extend = __webpack_require__(/*! ./util/extend */ 6);
+	var SDFMaterial = __webpack_require__(/*! ./SDFMaterial */ 19);
+	var BufferedPlanesGeometry = __webpack_require__(/*! ./BufferedPlanesGeometry */ 7);
+	var defaultFont = __webpack_require__(/*! ./textSpriteFont_AndoBold256.js */ 18);
+	var highRezFont = __webpack_require__(/*! ./textSpriteFont_AndoBold512.js */ 20);
+	var THREE = __webpack_require__(/*! three */ 2);
+	
+	
+	
+	
+	var textures = {
+	  fontMapAndoBold: THREE.ImageUtils.loadTexture('/textures/ando_bold_256.png'),
+	  fontMapAndoBoldHighRez: THREE.ImageUtils.loadTexture('/textures/ando_bold_512.png')
+	
+	};
+	
+	
+	var BufferedTextSDF = function(params){
+	// extends BufferedSprites
+		params = extend({
+			items : [{text:''}],
+			fontSize : 5,
+			color : 0xffffff,
+			billboard: false,  // don't understand this
+		},params) ;
+	
+	
+	
+	  // TODO: font should be changed to parameter
+		this.font = (params.highRez) ? highRezFont : defaultFont;
+	
+		this.fontSize = params.fontSize;
+		this.letterSpacing = params.letterSpacing || 0;
+		this.wordSpacing = params.wordSpacing || 0;
+		this.color = params.color;
+		this.items = params.items;
+	
+	
+	
+	
+	
+		this.fontScale = 1 / this.font.textureAtlasInfo.width *  6;
+	
+		var count = 0;
+	
+	
+		this.items.forEach(function(item){
+			if (item.text !== undefined) count += item.text.length;
+		});
+	
+	
+	
+	
+	
+		var atlasParams = {};
+		atlasParams.count = 5;
+		atlasParams.uvs = [];
+	
+	    for (var n = 0; n < atlasParams.count; n++){
+			atlasParams.uvs.push([0,0,1,0,1,1,0,1]);
+		}
+	
+	
+	  var material = new SDFMaterial({
+	    map:textures[this.font.textureId],
+	    epsilon:this.font.epsilon,
+	    color: this.color
+	
+	  });
+	
+	
+	
+	  var geometry = new BufferedPlanesGeometry({
+	    count: count
+	
+	  });
+	
+	
+	
+		/*
+	  params = extend({},params, {
+			count:count,
+			texture: textures[this.font.textureId],
+				//OBWW2.textures.fontMapAndoBoldHighRez
+			//	: OBWW2.textures.fontMapAndoBold,
+			initialPositionSet: new Float32Array(count * 3),
+			amountDrawn:1, size:[1,1], color: this.color,
+			atlas:true, atlasParams: atlasParams,
+			SDF: true,
+			epsilon:this.font.epsilon
+			});
+	
+	  */
+	
+		THREE.Mesh.call(this,geometry, material);
+	
+	
+	
+		this.setText();
+	
+	
+	
+	
+	
+	
+	
+	};
+	
+	BufferedTextSDF.prototype = Object.create( THREE.Mesh.prototype );
+	
+	BufferedTextSDF.prototype.setText = function(){
+		var width, index = 0;
+		this.maxItemWidth = 0;
+		for (var i = 0; i < this.items.length; i++){
+			if(this.items[i].text !== undefined){
+				var size  = this.getItemSize(this.items[i]);
+				shiftX = 0;
+				if (this.items[i].align === undefined || this.items[i].align.toLowerCase() === 'center' )
+					shiftX = size.width * -0.5 ;
+				width = this.setTextItem(this.items[i], index, shiftX, size.height * -0.5 );
+				this.maxItemWidth = Math.max(width, this.maxItemWidth);
+				index += this.items[i].text.length;
+			}
+		}
+		for (i = index; i < this.count; i++){
+	    // make rest invisible?
+			//this.geometry.renderSinglePositions(i,0,0);
+		}
+	
+		this.geometry.attributes.uv.needsUpdate = true;
+	//	this.geometry.attributes.offset.needsUpdate = true;
+		this.geometry.attributes.position.needsUpdate = true;
+	//	this.geometry.attributes.indivOpacity.needsUpdate = true;
+	
+	
+	};
+	
+	
+	
+	BufferedTextSDF.prototype.setTextItem = function(item, startIndex, startX, startY){
+	
+		var dx = 0;
+		var dy = 0;
+		var sx = (startX !== undefined) ? startX : 0; //start?
+		var sy = (startY !== undefined) ? startY : 0; //start?
+		var sz = 0; //start?
+	
+		if (item.y !== undefined) sy += item.y;
+		if (item.x !== undefined) sx += item.x;
+	
+		var opacity = (item.opacity !== undefined) ? item.opacity : 1;
+	
+	
+	
+	
+		var fontSize = (item.fontSize !== undefined) ? item.fontSize : this.fontSize;
+	
+		fontSize *= this.fontScale;
+	
+	
+		for (var i = 0; i < item.text.length; i++){
+	
+	
+			var character = item.text[ i ];
+	
+			var ascii = character.charCodeAt( 0 );
+			var glyphInfo = this.font.chars[ ascii ];
+	
+			// add empty space for glyphs which are not supported in the font
+	
+			if ( glyphInfo === undefined ) {
+	
+				dx += base * fontSize;
+				lastCharacter = character;
+	
+	      //make invisible..
+	      //this.geometry.renderSinglePositions(startIndex + i,0,0);
+	
+	
+				continue;
+	
+			}
+	
+			// move to a new line if word's bounding box would go over the lineLength
+	
+			var spriteWidth = glyphInfo.width * fontSize;
+			var spriteHeight = glyphInfo.height * fontSize;
+	
+			var xadvance = glyphInfo.xadvance * fontSize ;
+			var xoffset  = glyphInfo.xoffset * fontSize;
+			var yoffset  = glyphInfo.yoffset * fontSize;
+	
+			var x = sx + 0.5 * spriteWidth  + dx + xoffset;
+			var y = sy + 0.5 * spriteHeight + dy + yoffset - spriteHeight;
+			var z = sz;
+	
+		//	 + i
+	
+	    //this.setSpritePosition( startIndex + i, x, y, z );
+	    //this.geometry.renderSinglePositions(startIndex + i, x, y, z); //
+	
+			this.setCharacterGeometry( startIndex + i, glyphInfo, this.font.textureAtlasInfo, fontSize,x,y,z);
+			//this.setSpriteOpacity( startIndex + i, opacity);
+	
+			dx += xadvance + this.letterSpacing;
+	    if (character === ' ') dx += this.wordSpacing;
+		}
+	
+		return dx;
+	}
+	
+	BufferedTextSDF.prototype.getItemSize = function(item){
+	
+		var fontSize = (item.fontSize !== undefined) ? item.fontSize : this.fontSize;
+		var size = {width:0, height:fontSize};
+	
+		fontSize *= this.fontScale;
+	
+		for (var i = 0; i < item.text.length; i++){
+	
+			var character = item.text[ i ];
+	
+			var ascii = character.charCodeAt( 0 );
+			var glyphInfo = this.font.chars[ ascii ];
+	
+	
+			if ( glyphInfo !== undefined ) {
+				size.width += glyphInfo.xadvance * fontSize + this.letterSpacing;
+			}else {
+				size.width += this.font.textureAtlasInfo.base * fontSize + this.letterSpacing;
+			}
+	
+	
+		}
+	
+	  size.width -= this.letterSpacing;
+		return size;
+	
+	};
+	
+	
+	
+	BufferedTextSDF.prototype.setCharacterGeometry = function (index, t, a, fontSize,x,y,z) {
+	    var r = a.width,
+	        i = a.height,
+	        o = (a.base, t.width),
+	        n = t.height,
+	        s = t.x,
+	        l = t.y,
+	        h = s / r,
+	        d = (i - l) / i,
+	        c = (s + o) / r,
+	        u = (i - (l + n)) / i,
+	        f = (s + o) / r,
+	        p = (i - l) / i,
+	        m = s / r,
+	        v = (i - (l + n)) / i,
+	        g = o,
+	        S = n,
+	        G = fontSize, //x[y],
+	        M = fontSize; //x[y + 1];
+	        G = g * G, M = S * M;
+	
+	    this.setSpriteUV(index, m, v, h, d, c, u, f, p);
+	    this.geometry.renderSinglePositionAndScale(index,x,y,z,G, M);
+	    //this.geometry.renderSinglePositions(index,{x:x,y:y,z:z},20);
+	    //this.geometry.renderSinglePositions(index,{x:0,y:0,z:0},20);
+	};
+	
+	BufferedTextSDF.prototype.setSpriteScale = function (e, t, a) {
+	    var r = this.geometry.attributes.position.array,
+	        i = 12 * e;
+	    r[i] = t*-.5, r[i + 1] = a*-.5, r[i + 3] = t*.5, r[i + 4] = a*-.5, r[i + 6] = t*.5, r[i + 7] = a*.5, r[i + 9] = t*-.5, r[i + 10] = a*.5
+	};
+	BufferedTextSDF.prototype.setSpriteUV_ = function (e, t, a, r, i, o, n, s, l) {
+	    var h = this.geometry.attributes.uv.array,
+	        d = 8 * e;
+	    h[d] = t, h[d + 1] = a, h[d + 2] = o, h[d + 3] = n, h[d + 4] = s, h[d + 5] = l, h[d + 6] = r, h[d + 7] = i;
+	
+	};
+	BufferedTextSDF.prototype.setSpriteUV = function (index, x0, y3, x3, y2, x1, y1, x2, y0) {
+	    var h = this.geometry.attributes.uv.array,
+	        d = 8 * index;
+	    h[d] = x0, h[d + 1] = y0, h[d + 2] = x2, h[d + 3] = y2, h[d + 4] = x3, h[d + 5] = y3, h[d + 6] = x1, h[d + 7] = y1;
+	
+	};
+	BufferedTextSDF.prototype.setSpriteOpacity = function (index, opacity) {
+	    var h = this.geometry.attributes.indivOpacity.array,
+	        i = 4 * index;
+	    h[i] = opacity, h[i + 1] = opacity, h[i + 2] = opacity, h[i + 3] = opacity;
+	};
+	BufferedTextSDF.prototype.setSpritePosition = function (e, t, a, r) {
+	    var i = this.geometry.attributes.offset.array,
+	        o = 12 * e;
+	    i[o] = t, i[o + 1] = a, i[o + 2] = r, i[o + 3] = t, i[o + 4] = a, i[o + 5] = r, i[o + 6] = t, i[o + 7] = a, i[o + 8] = r, i[o + 9] = t, i[o + 10] = a, i[o + 11] = r;
+	};
+	
+	
+	
+	
+	module.exports = BufferedTextSDF;
+
+
+/***/ },
+/* 18 */
+/*!***************************************************!*\
+  !*** ./src/neilviz/textSpriteFont_AndoBold256.js ***!
+  \***************************************************/
+/***/ function(module, exports) {
+
+	module.exports = {
+	  textureAtlasInfo: {
+	
+	    width: 256,
+	    height: 256,
+	    base: 40
+	
+	  },
+	  epsilon: 0.1,
+	  textureId: 'fontMapAndoBold',
+	  chars: {
+	    32: {
+	      x: 235,
+	      y: 239,
+	      width: 4,
+	      height: 4,
+	      xoffset: -1.500,
+	      yoffset: 1.500,
+	      xadvance: 7.375
+	    },
+	    33: {
+	      x: 101,
+	      y: 36,
+	      width: 8,
+	      height: 36,
+	      xoffset: 0.500,
+	      yoffset: 33.688,
+	      xadvance: 8.563
+	    },
+	    34: {
+	      x: 223,
+	      y: 239,
+	      width: 12,
+	      height: 13,
+	      xoffset: 0.500,
+	      yoffset: 35.563,
+	      xadvance: 13.063
+	    },
+	    35: {
+	      x: 90,
+	      y: 0,
+	      width: 19,
+	      height: 36,
+	      xoffset: -0.938,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    36: {
+	      x: 143,
+	      y: 0,
+	      width: 16,
+	      height: 41,
+	      xoffset: 0.688,
+	      yoffset: 36.500,
+	      xadvance: 16.750
+	    },
+	    37: {
+	      x: 0,
+	      y: 0,
+	      width: 25,
+	      height: 37,
+	      xoffset: 0.063,
+	      yoffset: 34.125,
+	      xadvance: 24.563
+	    },
+	    38: {
+	      x: 125,
+	      y: 0,
+	      width: 18,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 18.438
+	    },
+	    39: {
+	      x: 200,
+	      y: 237,
+	      width: 7,
+	      height: 13,
+	      xoffset: 0.500,
+	      yoffset: 35.563,
+	      xadvance: 7.375
+	    },
+	    40: {
+	      x: 109,
+	      y: 86,
+	      width: 12,
+	      height: 44,
+	      xoffset: 0.500,
+	      yoffset: 35.125,
+	      xadvance: 10.500
+	    },
+	    41: {
+	      x: 109,
+	      y: 42,
+	      width: 12,
+	      height: 44,
+	      xoffset: -1.375,
+	      yoffset: 35.125,
+	      xadvance: 10.500
+	    },
+	    42: {
+	      x: 207,
+	      y: 238,
+	      width: 11,
+	      height: 11,
+	      xoffset: -0.813,
+	      yoffset: 35.688,
+	      xadvance: 8.813
+	    },
+	    43: {
+	      x: 233,
+	      y: 72,
+	      width: 17,
+	      height: 19,
+	      xoffset: -0.125,
+	      yoffset: 21.938,
+	      xadvance: 16.750
+	    },
+	    44: {
+	      x: 191,
+	      y: 237,
+	      width: 9,
+	      height: 12,
+	      xoffset: -1.250,
+	      yoffset: 4.875,
+	      xadvance: 6.500
+	    },
+	    45: {
+	      x: 207,
+	      y: 249,
+	      width: 11,
+	      height: 7,
+	      xoffset: -0.375,
+	      yoffset: 16.125,
+	      xadvance: 10.188
+	    },
+	    46: {
+	      x: 175,
+	      y: 245,
+	      width: 8,
+	      height: 8,
+	      xoffset: -0.375,
+	      yoffset: 5.563,
+	      xadvance: 6.813
+	    },
+	    47: {
+	      x: 159,
+	      y: 0,
+	      width: 18,
+	      height: 36,
+	      xoffset: -0.813,
+	      yoffset: 33.688,
+	      xadvance: 15.813
+	    },
+	    48: {
+	      x: 223,
+	      y: 165,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    49: {
+	      x: 78,
+	      y: 36,
+	      width: 12,
+	      height: 36,
+	      xoffset: -0.375,
+	      yoffset: 33.688,
+	      xadvance: 13.500
+	    },
+	    50: {
+	      x: 159,
+	      y: 201,
+	      width: 16,
+	      height: 36,
+	      xoffset: -0.125,
+	      yoffset: 34.125,
+	      xadvance: 15.625
+	    },
+	    51: {
+	      x: 159,
+	      y: 128,
+	      width: 16,
+	      height: 37,
+	      xoffset: -0.125,
+	      yoffset: 34.125,
+	      xadvance: 15.938
+	    },
+	    52: {
+	      x: 208,
+	      y: 0,
+	      width: 15,
+	      height: 36,
+	      xoffset: 0.063,
+	      yoffset: 33.688,
+	      xadvance: 15.938
+	    },
+	    53: {
+	      x: 159,
+	      y: 165,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.625,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    54: {
+	      x: 175,
+	      y: 128,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    55: {
+	      x: 193,
+	      y: 0,
+	      width: 15,
+	      height: 36,
+	      xoffset: -0.875,
+	      yoffset: 33.688,
+	      xadvance: 14.063
+	    },
+	    56: {
+	      x: 191,
+	      y: 128,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    57: {
+	      x: 207,
+	      y: 128,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    58: {
+	      x: 143,
+	      y: 231,
+	      width: 8,
+	      height: 22,
+	      xoffset: -0.375,
+	      yoffset: 23.188,
+	      xadvance: 6.813
+	    },
+	    59: {
+	      x: 68,
+	      y: 225,
+	      width: 9,
+	      height: 31,
+	      xoffset: -1.250,
+	      yoffset: 23.188,
+	      xadvance: 6.813
+	    },
+	    60: {
+	      x: 198,
+	      y: 72,
+	      width: 17,
+	      height: 23,
+	      xoffset: 0.125,
+	      yoffset: 23.688,
+	      xadvance: 16.750
+	    },
+	    61: {
+	      x: 239,
+	      y: 239,
+	      width: 17,
+	      height: 14,
+	      xoffset: -0.063,
+	      yoffset: 19.375,
+	      xadvance: 16.750
+	    },
+	    62: {
+	      x: 181,
+	      y: 72,
+	      width: 17,
+	      height: 23,
+	      xoffset: 0.125,
+	      yoffset: 23.688,
+	      xadvance: 16.750
+	    },
+	    63: {
+	      x: 125,
+	      y: 148,
+	      width: 15,
+	      height: 37,
+	      xoffset: -0.313,
+	      yoffset: 34.188,
+	      xadvance: 14.938
+	    },
+	    64: {
+	      x: 25,
+	      y: 0,
+	      width: 21,
+	      height: 44,
+	      xoffset: 0.688,
+	      yoffset: 34.188,
+	      xadvance: 22.375
+	    },
+	    65: {
+	      x: 239,
+	      y: 128,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    66: {
+	      x: 191,
+	      y: 201,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.563
+	    },
+	    67: {
+	      x: 239,
+	      y: 165,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 15.938
+	    },
+	    68: {
+	      x: 175,
+	      y: 165,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    69: {
+	      x: 90,
+	      y: 116,
+	      width: 13,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 13.375
+	    },
+	    70: {
+	      x: 90,
+	      y: 80,
+	      width: 13,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 13.125
+	    },
+	    71: {
+	      x: 239,
+	      y: 202,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    72: {
+	      x: 223,
+	      y: 128,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    73: {
+	      x: 46,
+	      y: 110,
+	      width: 7,
+	      height: 36,
+	      xoffset: 0.875,
+	      yoffset: 33.688,
+	      xadvance: 8.625
+	    },
+	    74: {
+	      x: 241,
+	      y: 36,
+	      width: 15,
+	      height: 36,
+	      xoffset: -0.500,
+	      yoffset: 33.688,
+	      xadvance: 14.625
+	    },
+	    75: {
+	      x: 207,
+	      y: 202,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.563
+	    },
+	    76: {
+	      x: 109,
+	      y: 219,
+	      width: 13,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 12.625
+	    },
+	    77: {
+	      x: 68,
+	      y: 0,
+	      width: 22,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 23.750
+	    },
+	    78: {
+	      x: 191,
+	      y: 165,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    79: {
+	      x: 207,
+	      y: 165,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    80: {
+	      x: 175,
+	      y: 201,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.125
+	    },
+	    81: {
+	      x: 109,
+	      y: 0,
+	      width: 16,
+	      height: 42,
+	      xoffset: 0.688,
+	      yoffset: 34.125,
+	      xadvance: 16.750
+	    },
+	    82: {
+	      x: 177,
+	      y: 36,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.563
+	    },
+	    83: {
+	      x: 223,
+	      y: 202,
+	      width: 16,
+	      height: 37,
+	      xoffset: 0.188,
+	      yoffset: 34.125,
+	      xadvance: 15.813
+	    },
+	    84: {
+	      x: 223,
+	      y: 0,
+	      width: 15,
+	      height: 36,
+	      xoffset: -0.875,
+	      yoffset: 33.688,
+	      xadvance: 13.438
+	    },
+	    85: {
+	      x: 193,
+	      y: 36,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    86: {
+	      x: 209,
+	      y: 36,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    87: {
+	      x: 46,
+	      y: 0,
+	      width: 22,
+	      height: 36,
+	      xoffset: 0.688,
+	      yoffset: 33.688,
+	      xadvance: 23.750
+	    },
+	    88: {
+	      x: 225,
+	      y: 36,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.500,
+	      yoffset: 33.688,
+	      xadvance: 16.375
+	    },
+	    89: {
+	      x: 177,
+	      y: 0,
+	      width: 16,
+	      height: 36,
+	      xoffset: 0.313,
+	      yoffset: 33.688,
+	      xadvance: 16.000
+	    },
+	    90: {
+	      x: 238,
+	      y: 0,
+	      width: 14,
+	      height: 36,
+	      xoffset: -0.063,
+	      yoffset: 33.688,
+	      xadvance: 13.813
+	    },
+	    91: {
+	      x: 90,
+	      y: 186,
+	      width: 10,
+	      height: 44,
+	      xoffset: 0.875,
+	      yoffset: 35.375,
+	      xadvance: 10.188
+	    },
+	    92: {
+	      x: 159,
+	      y: 36,
+	      width: 18,
+	      height: 36,
+	      xoffset: -0.813,
+	      yoffset: 33.688,
+	      xadvance: 15.813
+	    },
+	    93: {
+	      x: 68,
+	      y: 36,
+	      width: 10,
+	      height: 44,
+	      xoffset: -0.313,
+	      yoffset: 35.375,
+	      xadvance: 10.188
+	    },
+	    94: {
+	      x: 215,
+	      y: 72,
+	      width: 18,
+	      height: 19,
+	      xoffset: -0.563,
+	      yoffset: 33.688,
+	      xadvance: 16.750
+	    },
+	    95: {
+	      x: 0,
+	      y: 37,
+	      width: 25,
+	      height: 7,
+	      xoffset: -0.813,
+	      yoffset: 1.063,
+	      xadvance: 23.000
+	    },
+	    96: {
+	      x: 175,
+	      y: 237,
+	      width: 10,
+	      height: 8,
+	      xoffset: -0.188,
+	      yoffset: 34.125,
+	      xadvance: 9.250
+	    },
+	    97: {
+	      x: 68,
+	      y: 196,
+	      width: 15,
+	      height: 29,
+	      xoffset: 0.188,
+	      yoffset: 26.313,
+	      xadvance: 15.250
+	    },
+	    98: {
+	      x: 143,
+	      y: 79,
+	      width: 15,
+	      height: 38,
+	      xoffset: 0.500,
+	      yoffset: 35.563,
+	      xadvance: 15.563
+	    },
+	    99: {
+	      x: 68,
+	      y: 138,
+	      width: 15,
+	      height: 29,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 14.625
+	    },
+	    100: {
+	      x: 143,
+	      y: 41,
+	      width: 15,
+	      height: 38,
+	      xoffset: 0.500,
+	      yoffset: 35.563,
+	      xadvance: 15.563
+	    },
+	    101: {
+	      x: 68,
+	      y: 80,
+	      width: 15,
+	      height: 29,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 15.250
+	    },
+	    102: {
+	      x: 125,
+	      y: 185,
+	      width: 14,
+	      height: 38,
+	      xoffset: -0.938,
+	      yoffset: 35.563,
+	      xadvance: 10.688
+	    },
+	    103: {
+	      x: 143,
+	      y: 193,
+	      width: 15,
+	      height: 38,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 15.563
+	    },
+	    104: {
+	      x: 143,
+	      y: 155,
+	      width: 15,
+	      height: 38,
+	      xoffset: 0.500,
+	      yoffset: 35.563,
+	      xadvance: 15.563
+	    },
+	    105: {
+	      x: 46,
+	      y: 36,
+	      width: 8,
+	      height: 36,
+	      xoffset: 0.500,
+	      yoffset: 34.125,
+	      xadvance: 8.563
+	    },
+	    106: {
+	      x: 109,
+	      y: 130,
+	      width: 11,
+	      height: 45,
+	      xoffset: -2.938,
+	      yoffset: 34.125,
+	      xadvance: 8.563
+	    },
+	    107: {
+	      x: 143,
+	      y: 117,
+	      width: 15,
+	      height: 38,
+	      xoffset: 0.500,
+	      yoffset: 35.563,
+	      xadvance: 15.375
+	    },
+	    108: {
+	      x: 46,
+	      y: 72,
+	      width: 7,
+	      height: 38,
+	      xoffset: 0.875,
+	      yoffset: 35.563,
+	      xadvance: 8.563
+	    },
+	    109: {
+	      x: 159,
+	      y: 72,
+	      width: 22,
+	      height: 28,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 22.563
+	    },
+	    110: {
+	      x: 196,
+	      y: 100,
+	      width: 15,
+	      height: 28,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 15.563
+	    },
+	    111: {
+	      x: 125,
+	      y: 223,
+	      width: 15,
+	      height: 29,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 15.563
+	    },
+	    112: {
+	      x: 125,
+	      y: 74,
+	      width: 15,
+	      height: 37,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 15.563
+	    },
+	    113: {
+	      x: 125,
+	      y: 37,
+	      width: 15,
+	      height: 37,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 15.563
+	    },
+	    114: {
+	      x: 226,
+	      y: 100,
+	      width: 14,
+	      height: 28,
+	      xoffset: 0.500,
+	      yoffset: 26.313,
+	      xadvance: 13.438
+	    },
+	    115: {
+	      x: 68,
+	      y: 109,
+	      width: 15,
+	      height: 29,
+	      xoffset: 0.125,
+	      yoffset: 26.313,
+	      xadvance: 14.813
+	    },
+	    116: {
+	      x: 90,
+	      y: 152,
+	      width: 13,
+	      height: 34,
+	      xoffset: -1.250,
+	      yoffset: 31.938,
+	      xadvance: 10.688
+	    },
+	    117: {
+	      x: 181,
+	      y: 100,
+	      width: 15,
+	      height: 28,
+	      xoffset: 0.500,
+	      yoffset: 25.875,
+	      xadvance: 15.563
+	    },
+	    118: {
+	      x: 68,
+	      y: 167,
+	      width: 15,
+	      height: 29,
+	      xoffset: 0.500,
+	      yoffset: 26.250,
+	      xadvance: 15.563
+	    },
+	    119: {
+	      x: 159,
+	      y: 100,
+	      width: 22,
+	      height: 28,
+	      xoffset: 0.500,
+	      yoffset: 25.875,
+	      xadvance: 22.563
+	    },
+	    120: {
+	      x: 211,
+	      y: 100,
+	      width: 15,
+	      height: 28,
+	      xoffset: 0.313,
+	      yoffset: 25.875,
+	      xadvance: 15.188
+	    },
+	    121: {
+	      x: 125,
+	      y: 111,
+	      width: 15,
+	      height: 37,
+	      xoffset: 0.500,
+	      yoffset: 25.875,
+	      xadvance: 15.563
+	    },
+	    122: {
+	      x: 240,
+	      y: 100,
+	      width: 14,
+	      height: 28,
+	      xoffset: -0.438,
+	      yoffset: 25.875,
+	      xadvance: 12.438
+	    },
+	    123: {
+	      x: 109,
+	      y: 175,
+	      width: 11,
+	      height: 44,
+	      xoffset: -0.375,
+	      yoffset: 35.188,
+	      xadvance: 10.125
+	    },
+	    124: {
+	      x: 100,
+	      y: 186,
+	      width: 7,
+	      height: 47,
+	      xoffset: 0.875,
+	      yoffset: 35.563,
+	      xadvance: 8.375
+	    },
+	    125: {
+	      x: 90,
+	      y: 36,
+	      width: 11,
+	      height: 44,
+	      xoffset: -0.375,
+	      yoffset: 35.188,
+	      xadvance: 10.125
+	    },
+	    126: {
+	      x: 233,
+	      y: 91,
+	      width: 18,
+	      height: 9,
+	      xoffset: -0.688,
+	      yoffset: 17.188,
+	      xadvance: 16.750
+	    }
+	  }
+	};
+
+
+/***/ },
+/* 19 */
+/*!************************************!*\
+  !*** ./src/neilviz/SDFMaterial.js ***!
+  \************************************/
 /***/ function(module, exports, __webpack_require__) {
 
 	var THREE = __webpack_require__(/*! three */ 2);
-	var extend = __webpack_require__(/*! ./util/extend */ 7);
+	var extend = __webpack_require__(/*! ./util/extend */ 6);
 	
-	var CircleMaterial = function(params){
+	var SDFMaterial = function(params){
 	
-	  params = params || {};
+	  var color = (params.color !== undefined) ? params.color : 0xffffff;
 	
-	  var color = (params.color) ? params.color : 0xffffff;
+	  if (!params.map) console.warn('error: SDFMaterial requires map param');
 	
 	
 	  var uniforms = {
 	
 	    color:     { type: "c", value: new THREE.Color( color ) },
+	    map:   { type: "t", value: params.map }	,
 	    opacity:   { type: "f", value: 1}	,
-	    epsilon:   { type: "f", value: 0.02}	,
+	    epsilon:   { type: "f", value: 0.06}	,
 	
 	};
 	
@@ -50678,17 +54623,19 @@
 	      "vec4 rgba = texture2D(map,  vUv);",
 	      //"vec4 reveal = texture2D(revealMap,  vUv);",
 	
+	      '				vec4 texColor = texture2D( map, vUv );',
+	
 	
 	      '				#ifdef GL_OES_standard_derivatives',
-	      '				float w = clamp( 50.0 * epsilon * ( abs( dFdx( vUv.x ) ) + abs( dFdy( vUv.y ) ) ), 0.0, 0.5 );',
+	      '				float w = clamp( 200.0 * epsilon * ( abs( dFdx( vUv.x ) ) + abs( dFdy( vUv.y ) ) ), 0.0, 0.5 );',
 	      '				#else',
 	      '				float w = epsilon;',
 	      '				#endif',
-	      '       float r2 = (vUv.x - 0.5) * (vUv.x - 0.5) +  (vUv.y - 0.5) * (vUv.y - 0.5) ;',
 	    //  '       w = 0.02; ',
-	      '       float sdfa = smoothstep( 0.25, 0.25 -w, r2);',
-	      '				if (sdfa < 0.01) discard;',
+	      '       float sdfa = smoothstep( 0.5 - w, 0.5 + w, texColor.r );',
+	  //    '				if (sdfa < 0.01) discard;',
 	      '				gl_FragColor = vec4( color, opacity * sdfa);',
+	  //    '				gl_FragColor = vec4( 0.0,0.0,0.0,1.0);',
 	
 	      //
 	
@@ -50703,10 +54650,11 @@
 	      vertexShader: vertexShader,
 	      derivatives: true,
 	      transparent: true,
-	      name: 'circle',  //??
+	      name: 'sdf',  //??
 	
 	    });
 	
+	    this.envMap = params.envMap;
 	
 	
 	
@@ -50715,35 +54663,126 @@
 	
 	};
 	
-	CircleMaterial.prototype =  Object.create( THREE.ShaderMaterial.prototype );
+	SDFMaterial.prototype =  Object.create( THREE.ShaderMaterial.prototype );
 	
-	module.exports = CircleMaterial;
+	module.exports = SDFMaterial;
 
 
 /***/ },
-/* 7 */
-/*!************************************!*\
-  !*** ./src/neilviz/util/extend.js ***!
-  \************************************/
+/* 20 */
+/*!***************************************************!*\
+  !*** ./src/neilviz/textSpriteFont_AndoBold512.js ***!
+  \***************************************************/
 /***/ function(module, exports) {
 
-	var extend = function(out) {
-	  out = out || {};
+	module.exports = {
+	textureAtlasInfo: {
 	
-	  for (var i = 1; i < arguments.length; i++) {
-	    if (!arguments[i])
-	      continue;
+						width		: 512,
+						height	: 512,
+						base		: 40
 	
-	    for (var key in arguments[i]) {
-	      if (arguments[i].hasOwnProperty(key))
-	        out[key] = arguments[i][key];
-	    }
-	  }
-	
-	  return out;
+					},
+	epsilon: 0.2,
+	textureId: 'fontMapAndoBoldHighRez',
+	chars : {
+	32: {x:497, y:506, width:4, height:4, xoffset:-1.500, yoffset:1.500, xadvance:15.188},
+	33: {x:233, y:249, width:13, height:71, xoffset:2.750, yoffset:68.063, xadvance:17.688},
+	34: {x:455, y:468, width:22, height:24, xoffset:2.625, yoffset:71.875, xadvance:27.000},
+	35: {x:177, y:0, width:36, height:70, xoffset:-0.313, yoffset:68.063, xadvance:34.563},
+	36: {x:277, y:0, width:29, height:82, xoffset:3.000, yoffset:73.875, xadvance:34.563},
+	37: {x:41, y:0, width:48, height:72, xoffset:1.688, yoffset:69.000, xadvance:50.750},
+	38: {x:213, y:0, width:35, height:72, xoffset:3.063, yoffset:69.063, xadvance:38.125},
+	39: {x:426, y:468, width:10, height:24, xoffset:2.625, yoffset:71.875, xadvance:15.188},
+	40: {x:248, y:390, width:21, height:87, xoffset:2.625, yoffset:71.000, xadvance:21.688},
+	41: {x:248, y:303, width:21, height:87, xoffset:-1.125, yoffset:71.000, xadvance:21.688},
+	42: {x:455, y:492, width:19, height:19, xoffset:0.000, yoffset:72.250, xadvance:18.250},
+	43: {x:382, y:70, width:32, height:36, xoffset:1.500, yoffset:43.813, xadvance:34.563},
+	44: {x:497, y:471, width:14, height:22, xoffset:-0.938, yoffset:8.375, xadvance:13.375},
+	45: {x:397, y:466, width:20, height:11, xoffset:0.938, yoffset:31.875, xadvance:21.063},
+	46: {x:497, y:493, width:13, height:13, xoffset:0.938, yoffset:9.875, xadvance:14.063},
+	47: {x:306, y:180, width:33, height:70, xoffset:0.000, yoffset:68.063, xadvance:32.688},
+	48: {x:455, y:252, width:29, height:72, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	49: {x:213, y:403, width:22, height:70, xoffset:0.938, yoffset:68.063, xadvance:27.813},
+	50: {x:397, y:395, width:29, height:71, xoffset:1.313, yoffset:69.000, xadvance:32.313},
+	51: {x:426, y:396, width:29, height:72, xoffset:1.313, yoffset:69.000, xadvance:32.875},
+	52: {x:397, y:0, width:29, height:70, xoffset:1.813, yoffset:68.063, xadvance:32.875},
+	53: {x:397, y:324, width:29, height:71, xoffset:3.000, yoffset:68.125, xadvance:34.563},
+	54: {x:339, y:180, width:29, height:72, xoffset:3.000, yoffset:69.063, xadvance:34.563},
+	55: {x:484, y:324, width:28, height:70, xoffset:-0.188, yoffset:68.063, xadvance:29.063},
+	56: {x:368, y:180, width:29, height:72, xoffset:3.063, yoffset:69.000, xadvance:34.563},
+	57: {x:397, y:180, width:29, height:72, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	58: {x:484, y:471, width:13, height:41, xoffset:0.938, yoffset:46.375, xadvance:14.063},
+	59: {x:233, y:72, width:15, height:60, xoffset:-0.875, yoffset:46.438, xadvance:14.063},
+	60: {x:480, y:125, width:31, height:43, xoffset:2.000, yoffset:47.313, xadvance:34.563},
+	61: {x:414, y:70, width:32, height:25, xoffset:1.500, yoffset:38.500, xadvance:34.563},
+	62: {x:306, y:460, width:31, height:43, xoffset:2.000, yoffset:47.313, xadvance:34.563},
+	63: {x:397, y:252, width:29, height:72, xoffset:0.938, yoffset:69.000, xadvance:30.875},
+	64: {x:0, y:0, width:41, height:87, xoffset:3.000, yoffset:69.000, xadvance:46.188},
+	65: {x:368, y:323, width:29, height:71, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	66: {x:368, y:0, width:29, height:70, xoffset:3.063, yoffset:68.063, xadvance:34.188},
+	67: {x:426, y:252, width:29, height:72, xoffset:3.000, yoffset:69.000, xadvance:32.875},
+	68: {x:306, y:390, width:29, height:70, xoffset:3.000, yoffset:68.063, xadvance:34.563},
+	69: {x:474, y:0, width:24, height:70, xoffset:3.000, yoffset:68.063, xadvance:27.625},
+	70: {x:450, y:0, width:24, height:70, xoffset:3.000, yoffset:68.063, xadvance:27.063},
+	71: {x:426, y:324, width:29, height:72, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	72: {x:306, y:320, width:29, height:70, xoffset:3.000, yoffset:68.063, xadvance:34.563},
+	73: {x:498, y:0, width:12, height:70, xoffset:3.438, yoffset:68.063, xadvance:17.875},
+	74: {x:484, y:252, width:27, height:71, xoffset:0.563, yoffset:68.063, xadvance:30.188},
+	75: {x:306, y:250, width:29, height:70, xoffset:3.000, yoffset:68.063, xadvance:34.188},
+	76: {x:426, y:0, width:24, height:70, xoffset:3.000, yoffset:68.063, xadvance:26.000},
+	77: {x:89, y:0, width:44, height:71, xoffset:3.000, yoffset:69.000, xadvance:49.000},
+	78: {x:426, y:180, width:29, height:71, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	79: {x:455, y:324, width:29, height:72, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	80: {x:339, y:252, width:29, height:70, xoffset:3.000, yoffset:68.063, xadvance:33.250},
+	81: {x:248, y:0, width:29, height:83, xoffset:3.000, yoffset:69.000, xadvance:34.563},
+	82: {x:368, y:394, width:29, height:70, xoffset:3.063, yoffset:68.063, xadvance:34.188},
+	83: {x:455, y:396, width:29, height:72, xoffset:2.063, yoffset:69.000, xadvance:32.688},
+	84: {x:339, y:392, width:29, height:70, xoffset:-0.188, yoffset:68.063, xadvance:27.750},
+	85: {x:455, y:180, width:29, height:71, xoffset:3.000, yoffset:68.063, xadvance:34.563},
+	86: {x:368, y:252, width:29, height:71, xoffset:3.000, yoffset:68.063, xadvance:34.563},
+	87: {x:133, y:0, width:44, height:71, xoffset:3.000, yoffset:68.063, xadvance:49.000},
+	88: {x:339, y:0, width:29, height:70, xoffset:2.625, yoffset:68.063, xadvance:33.813},
+	89: {x:339, y:322, width:29, height:70, xoffset:2.250, yoffset:68.063, xadvance:33.063},
+	90: {x:484, y:180, width:26, height:70, xoffset:1.500, yoffset:68.063, xadvance:28.500},
+	91: {x:194, y:350, width:17, height:87, xoffset:3.438, yoffset:71.500, xadvance:21.000},
+	92: {x:306, y:0, width:33, height:70, xoffset:0.000, yoffset:68.063, xadvance:32.688},
+	93: {x:177, y:350, width:17, height:87, xoffset:0.938, yoffset:71.500, xadvance:21.000},
+	94: {x:348, y:70, width:34, height:35, xoffset:0.563, yoffset:68.063, xadvance:34.563},
+	95: {x:446, y:86, width:48, height:11, xoffset:0.000, yoffset:0.563, xadvance:47.500},
+	96: {x:436, y:468, width:17, height:14, xoffset:1.313, yoffset:69.000, xadvance:19.125},
+	97: {x:177, y:182, width:27, height:56, xoffset:2.063, yoffset:52.875, xadvance:31.563},
+	98: {x:484, y:396, width:27, height:75, xoffset:2.625, yoffset:71.938, xadvance:32.125},
+	99: {x:177, y:126, width:27, height:56, xoffset:2.625, yoffset:52.875, xadvance:30.188},
+	100: {x:277, y:82, width:27, height:75, xoffset:2.625, yoffset:71.938, xadvance:32.125},
+	101: {x:177, y:70, width:27, height:56, xoffset:2.625, yoffset:52.875, xadvance:31.563},
+	102: {x:248, y:229, width:25, height:74, xoffset:-0.375, yoffset:71.938, xadvance:22.125},
+	103: {x:277, y:231, width:27, height:74, xoffset:2.688, yoffset:52.875, xadvance:32.125},
+	104: {x:277, y:305, width:27, height:74, xoffset:2.625, yoffset:71.938, xadvance:32.125},
+	105: {x:233, y:162, width:13, height:71, xoffset:2.750, yoffset:69.000, xadvance:17.688},
+	106: {x:213, y:72, width:20, height:90, xoffset:-4.563, yoffset:69.000, xadvance:17.688},
+	107: {x:277, y:157, width:27, height:74, xoffset:2.625, yoffset:71.875, xadvance:31.750},
+	108: {x:194, y:437, width:11, height:74, xoffset:3.438, yoffset:71.875, xadvance:17.688},
+	109: {x:306, y:125, width:42, height:55, xoffset:2.625, yoffset:52.875, xadvance:46.563},
+	110: {x:375, y:125, width:27, height:55, xoffset:2.625, yoffset:52.875, xadvance:32.125},
+	111: {x:277, y:452, width:27, height:56, xoffset:2.625, yoffset:52.875, xadvance:32.125},
+	112: {x:248, y:83, width:27, height:73, xoffset:2.625, yoffset:52.875, xadvance:32.125},
+	113: {x:248, y:156, width:27, height:73, xoffset:2.625, yoffset:52.875, xadvance:32.125},
+	114: {x:429, y:125, width:26, height:55, xoffset:2.625, yoffset:52.750, xadvance:27.750},
+	115: {x:177, y:294, width:27, height:56, xoffset:1.875, yoffset:52.875, xadvance:30.563},
+	116: {x:213, y:336, width:24, height:67, xoffset:-0.938, yoffset:64.438, xadvance:22.063},
+	117: {x:348, y:125, width:27, height:55, xoffset:2.625, yoffset:51.875, xadvance:32.125},
+	118: {x:177, y:238, width:27, height:56, xoffset:2.625, yoffset:52.688, xadvance:32.125},
+	119: {x:306, y:70, width:42, height:55, xoffset:2.625, yoffset:51.875, xadvance:46.563},
+	120: {x:402, y:125, width:27, height:54, xoffset:2.313, yoffset:51.875, xadvance:31.375},
+	121: {x:277, y:379, width:27, height:73, xoffset:2.688, yoffset:51.938, xadvance:32.125},
+	122: {x:455, y:125, width:25, height:54, xoffset:0.750, yoffset:51.875, xadvance:25.750},
+	123: {x:213, y:162, width:20, height:87, xoffset:0.938, yoffset:71.125, xadvance:20.875},
+	124: {x:235, y:403, width:11, height:92, xoffset:3.438, yoffset:71.875, xadvance:17.313},
+	125: {x:213, y:249, width:20, height:87, xoffset:0.938, yoffset:71.125, xadvance:20.875},
+	126: {x:446, y:70, width:35, height:16, xoffset:0.250, yoffset:33.938, xadvance:34.563}
+	}
 	};
-	
-	module.exports = extend;
 
 
 /***/ }
