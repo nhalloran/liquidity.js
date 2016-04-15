@@ -1,0 +1,21 @@
+{
+  "name": "liquidity.js",
+  "version": "1.0.0",
+  "description": "Data visualization library for depicting quantities as liquid circles",
+  "dependencies": {
+    "d3": "^3.5.16",
+    "three": "^0.75.0",
+    "tween.js": "^16.3.4"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nhalloran/liquidity.js.git"
+  },
+  "author": "Neil Halloran",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nhalloran/liquidity.js/issues"
+  },
+  "homepage": "https://github.com/nhalloran/liquidity.js"
+}
