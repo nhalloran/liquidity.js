@@ -1,28 +1,29 @@
 var THREE = require('three');
 var MarchingCubes = require('./MarchingCubes');
+var config = require('./config');
 
 
 //test
 // MARCHING CUBES
 
-      var material = new THREE.MeshPhongMaterial({color:0x0000ff, side: THREE.BackSide});
+      var material = new THREE.MeshPhongMaterial({color:0xffffff, side: THREE.BackSide, vertexColors: THREE.VertexColors });
 
-      var resolution = 200;
-      var numBlobs = 10;
+      var resolution = config.metaballResolution;
+    //  var numBlobs = 10;
 
       var effect = new MarchingCubes( resolution, material, true, true );
 
-      var scaleFix = 1000;
+      var scaleFix = 2000;
       var posFix = {x:0.5,y:0.5, z:0.5}
 
       effect.position.set( -posFix.x, -posFix.y, -posFix.z );
       effect.scale.set( scaleFix/2, scaleFix/2, scaleFix/2 );
 
       effect.enableUvs = false;
-      effect.enableColors = false;
+    //  effect.enableColors = false;
 
 
-      function updateCubes( object, time, numblobs ) {
+      /*function updateCubes( object, time, numblobs ) {
 
   			object.reset();
 
@@ -30,8 +31,8 @@ var MarchingCubes = require('./MarchingCubes');
 
   			var i, ballx, bally, ballz, subtract, strength;
 
-  			subtract = 12;
-  			strength = 1.2 / ( ( Math.sqrt( numblobs ) - 1 ) / 4 + 1 );
+  			subtract = 3;
+  			strength = 0.001 / ( ( Math.sqrt( numblobs ) - 1 ) / 4 + 1 );
 
   			for ( i = 0; i < numblobs; i ++ ) {
 
@@ -44,6 +45,7 @@ var MarchingCubes = require('./MarchingCubes');
   			}
 
   		}
+      */
       effect.update = function( nodes ) {
 
   			effect.reset();
@@ -54,7 +56,7 @@ var MarchingCubes = require('./MarchingCubes');
 
   			//subtract = 12;
   			subtract = 40;
-  			strength = 0.1 * 1.2 / ( ( Math.sqrt( nodes.length ) - 1 ) / 4 + 1 );
+  			strength = 0.3 * 0.1 * 1.2 / ( ( Math.sqrt( nodes.length ) - 1 ) / 4 + 1 );
 
   			for ( i = 0; i < nodes.length; i ++ ) {
           var node = nodes[i];

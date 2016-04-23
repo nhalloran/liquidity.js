@@ -1,4 +1,10 @@
+var config = require('./config');
 var initScene = require('./initScene');
 
 initScene.init();
-initScene.animate();
+if (config.capture){
+  initScene.captureFrames();
+}
+else{
+  initScene.animate();
+}

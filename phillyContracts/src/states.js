@@ -20,10 +20,14 @@ function hexToRgbArray(hex) {
 }
 
 
-var textItems = require('./textItems');
+var textObjects = require('./textItems').objects;
 
 
 var states = {};
+var textKeys = Object.keys(textObjects);
+
+
+
 
 
 // *********************
@@ -37,16 +41,31 @@ var states = {};
 //   not actual refernces.
 // *********************
 
+/*states.empty = {
+    focis: [],
+    nodes: [],
+    text: []
+  };
+*/
+
 states.wholeCity = function() {
+
   // state
   var foci = {
     x: 0,
     y: 0,
     distSq: model.totalBudget * 0.0000035
   };
+
   var state = {
     focis: [foci],
-    nodes: []
+    nodes: [],
+    text: ['phillyTotal'],
+    camPos:{
+      x:0,
+      y:0,
+      z:300
+    },
   };
 
   nodes.forEach(function(node,i){
@@ -68,8 +87,18 @@ states.deptByCat = function() {
   // state
   var state = {
     focis: [],
-    nodes: []
+    nodes: [],
+    text: textKeys.filter(function(key){
+      return (key.substring(0,5) === 'dept_');
+    }),
+    camPos:{
+      x:0,
+      y:0,
+      z:450
+    },
   };
+
+
 
   var deptFoci = []; //for this state, assigns a foci to each dept
 
@@ -86,11 +115,11 @@ states.deptByCat = function() {
 
       };
       //temp
-      if (textItems['dept_t_' + dept.did]){
-        textItems['dept_t_' + dept.did].position.x = cat.x;
-        textItems['dept_t_' + dept.did].position.y = yC;
-        textItems['dept_n_' + dept.did].position.x = cat.x;
-        textItems['dept_n_' + dept.did].position.y = yC;
+      if (textObjects['dept_t_' + dept.did]){
+        textObjects['dept_t_' + dept.did].position.x = cat.x;
+        textObjects['dept_t_' + dept.did].position.y = yC;
+        textObjects['dept_n_' + dept.did].position.x = cat.x;
+        textObjects['dept_n_' + dept.did].position.y = yC;
 
       }
 
@@ -115,7 +144,15 @@ states.catTotals = function() {
   // state
   var state = {
     focis: [],
-    nodes: []
+    nodes: [],
+    text: textKeys.filter(function(key){
+      return (key.substring(0,4) === 'cat_');
+    }),
+    camPos:{
+      x:0,
+      y:0,
+      z:450
+    },
   };
 
   var catFoci = []; //for this state, assigns a foci to each dept
@@ -132,11 +169,11 @@ states.catTotals = function() {
       catFoci[cat.cid] = foci;
 
       //temp
-      if (textItems['cat_t_' + cat.cid]){
-        textItems['cat_t_' + cat.cid].position.x = cat.x;
-        textItems['cat_t_' + cat.cid].position.y = 10;
-        textItems['cat_n_' + cat.cid].position.x = cat.x;
-        textItems['cat_n_' + cat.cid].position.y = 10;
+      if (textObjects['cat_t_' + cat.cid]){
+        textObjects['cat_t_' + cat.cid].position.x = cat.x;
+        textObjects['cat_t_' + cat.cid].position.y = 10;
+        textObjects['cat_n_' + cat.cid].position.x = cat.x;
+        textObjects['cat_n_' + cat.cid].position.y = 10;
 
       }
   });

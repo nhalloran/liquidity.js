@@ -1,3 +1,5 @@
+var THREE = require('three');
+
 /**
  * @author alteredq / http://alteredqualia.com/
  *
@@ -5,7 +7,7 @@
  * http://webglsamples.googlecode.com/hg/blob/blob.html
  */
 
-THREE.MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
+var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 
 	THREE.ImmediateRenderObject.call( this, material );
 
@@ -752,8 +754,10 @@ THREE.MarchingCubes = function ( resolution, material, enableUvs, enableColors )
 
 };
 
-THREE.MarchingCubes.prototype = Object.create( THREE.ImmediateRenderObject.prototype );
-THREE.MarchingCubes.prototype.constructor = THREE.MarchingCubes;
+MarchingCubes.prototype = Object.create( THREE.ImmediateRenderObject.prototype );
+MarchingCubes.prototype.constructor = MarchingCubes;
+
+module.exports = MarchingCubes;
 
 
 /////////////////////////////////////

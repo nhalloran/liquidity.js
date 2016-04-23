@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Data visualization library for depicting quantities as liquid circles",
   "dependencies": {
+    "babyparse": "^0.4.5",
+    "ccapture.js": "^1.0.3",
     "d3": "^3.5.16",
+    "dsv-loader": "^1.0.3",
     "three": "^0.75.0",
     "tween.js": "^16.3.4"
   },

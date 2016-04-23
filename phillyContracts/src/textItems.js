@@ -26,5 +26,16 @@ depts.forEach(function(dept){
 
 });
 
+//start out w zero opacity
+var allPromises = [];
+Object.keys(textItems).forEach(function(k){
+  textItems[k].visible = false;
+  textItems[k].material.uniforms.opacity.value = 0;
+  allPromises.push(textItems[k].loadedPromise);
+});
 
-module.exports = textItems;
+
+module.exports = {
+  objects: textItems,
+  allLoaded: Promise.all(allPromises)
+};

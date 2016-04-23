@@ -1,7 +1,39 @@
 var THREE = require('three');
 var cats = require('./data/cats');
-var depts = require('./data/phillyBudgetDeptAndCat');
+var depts = require('./data/depts');
+var initialPositions = require('./data/initialPositions');
+var config = require('./config');
+var budget = require('dsv!./data/phillyBudget2015.csv');
 
+var deptsLookup = {};
+
+var missingDepts = [];
+
+depts.forEach(function(dept){
+  dept.t = 0;
+  deptsLookup[dept.n] = dept;
+});
+
+
+budget.forEach(function(item){
+  var dept = deptsLookup[item.department];
+  if (dept)
+    dept.t += Number(item.total);
+  else{
+    console.log('no dept match', item.department);
+    if (missingDepts.indexOf(item.department) === -1)
+      missingDepts.push(item.department);
+  }
+});
+
+
+var depts = depts.filter(function(dept){
+  return dept.t > 0;
+});
+
+
+
+var eduDistrictSpending2015 = 2864005 * 1000;
 
 var catsById = {};
 cats.forEach(function(cat, i) {
@@ -15,7 +47,7 @@ cats.forEach(function(cat, i) {
 });
 
 
-var dotValue = 5000000;
+var dotValue = config.dotValue;
 var totalDots = 0;
 var totalBudget = 0;
 depts.forEach(function(dept, i) {
@@ -40,11 +72,13 @@ depts.forEach(function(dept, did) {
   var count = Math.round(dept.t / dotValue);
 
   for (var j = 0; j < count; j++) {
+    var nid = nodes.length;
+    var initialPos = initialPositions[nid] || [0,0];
     var node = {
-      x: Math.random() * 1000 - 500,
-      y: Math.random() * 1000 - 500,
+      x: initialPos[0],
+      y: initialPos[1],
       z: 0,
-      nid: nodes.length,
+      nid: nid,
       did: did
     };
     nodes.push(node);
