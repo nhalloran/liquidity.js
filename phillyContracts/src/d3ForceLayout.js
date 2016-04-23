@@ -1,14 +1,7 @@
-import "../behavior/drag";
-import "../core/identity";
-import "../core/rebind";
-import "../event/event";
-import "../event/dispatch";
-import "../event/timer";
-import "../geom/quadtree";
-import "layout";
+var d3 = require('d3');
 
 // A rudimentary force layout using Gauss-Seidel.
-d3.layout.force = function() {
+var d3ForceLayout = function() {
   var force = {},
       event = d3.dispatch("start", "tick", "end"),
       timer,
@@ -206,7 +199,8 @@ d3.layout.force = function() {
       }
     } else if (x > 0) { // otherwise, fire it up!
       event.start({type: "start", alpha: alpha = x});
-      timer = d3_timer(force.tick);
+      // disable timer
+      //timer = d3_timer(force.tick);
     }
 
     return force;
@@ -370,3 +364,5 @@ function d3_layout_forceAccumulate(quad, alpha, charges) {
 var d3_layout_forceLinkDistance = 20,
     d3_layout_forceLinkStrength = 1,
     d3_layout_forceChargeDistance2 = Infinity;
+
+module.exports = d3ForceLayout;
