@@ -20,11 +20,11 @@ function hexToRgbArray(hex) {
 }
 
 
-var textObjects = require('./textItems').objects;
+//var textObjects = require('./textItems').objects;
 
 
 var states = {};
-var textKeys = Object.keys(textObjects);
+//var textKeys = Object.keys(textObjects);
 
 
 
@@ -88,9 +88,7 @@ states.deptByCat = function() {
   var state = {
     focis: [],
     nodes: [],
-    text: textKeys.filter(function(key){
-      return (key.substring(0,5) === 'dept_');
-    }),
+    text: [],
     camPos:{
       x:0,
       y:0,
@@ -108,13 +106,20 @@ states.deptByCat = function() {
     });
     yC = 100;
     cat.depts.forEach(function(dept) {
+
+      state.text.push('dept_t_' + dept.did);
+      state.text.push('dept_n_' + dept.did);
+
+
       var foci = {
         x: cat.x,
         y: yC,
-        distSq: dept.t * 0.0000035
+        distSq: dept.t * 0.0000035,
+        did: dept.did
 
       };
       //temp
+      /*
       if (textObjects['dept_t_' + dept.did]){
         textObjects['dept_t_' + dept.did].position.x = cat.x;
         textObjects['dept_t_' + dept.did].position.y = yC;
@@ -122,6 +127,7 @@ states.deptByCat = function() {
         textObjects['dept_n_' + dept.did].position.y = yC;
 
       }
+      */
 
       state.focis.push(foci);
       deptFoci[dept.did] = foci;
@@ -145,9 +151,7 @@ states.catTotals = function() {
   var state = {
     focis: [],
     nodes: [],
-    text: textKeys.filter(function(key){
-      return (key.substring(0,4) === 'cat_');
-    }),
+    text: [],
     camPos:{
       x:0,
       y:0,
@@ -159,23 +163,28 @@ states.catTotals = function() {
 
   cats.forEach(function(cat) {
 
+    state.text.push('cat_t_' + cat.cid);
+    state.text.push('cat_n_' + cat.cid);
+
     var foci = {
         x: cat.x,
         y: 10,
-        distSq: cat.t * 0.0000035
+        distSq: cat.t * 0.0000035,
+        cid: cat.cid
 
       };
       state.focis.push(foci);
       catFoci[cat.cid] = foci;
 
       //temp
-      if (textObjects['cat_t_' + cat.cid]){
+      /*if (textObjects['cat_t_' + cat.cid]){
         textObjects['cat_t_' + cat.cid].position.x = cat.x;
         textObjects['cat_t_' + cat.cid].position.y = 10;
         textObjects['cat_n_' + cat.cid].position.x = cat.x;
         textObjects['cat_n_' + cat.cid].position.y = 10;
 
       }
+      */
   });
 
   nodes.forEach(function(node, i) {

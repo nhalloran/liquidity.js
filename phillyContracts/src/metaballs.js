@@ -56,7 +56,7 @@ var config = require('./config');
 
   			//subtract = 12;
   			subtract = 40;
-  			strength = 0.3 * 0.1 * 1.2 / ( ( Math.sqrt( nodes.length ) - 1 ) / 4 + 1 );
+  			strength = 0.13 * 0.1 * 1.2 / ( ( Math.sqrt( nodes.length ) - 1 ) / 4 + 1 );
 
   			for ( i = 0; i < nodes.length; i ++ ) {
           var node = nodes[i];

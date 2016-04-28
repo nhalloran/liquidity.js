@@ -33,7 +33,6 @@ if (config.capture) {
 var model = require('./model');
 var states = require('./states');
 var textItems = require('./textItems');
-var textObjects = textItems.objects;
 
 var catsById = model.catsById;
 var depts = model.depts;
@@ -67,6 +66,8 @@ var force = {
 function init() {
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
   camera.position.z = 400;
+
+  var textObjects = textItems.getObjects();
 
 
   scene = new THREE.Scene();
@@ -382,7 +383,6 @@ function animate() {
 }
 
 function captureFrames() {
-  textItems.allLoaded.then(function() {
     var frameDur = 1 / config.captureFPS;
     var f = 0;
     capturer.start();
@@ -405,7 +405,6 @@ function captureFrames() {
       }
       nextFrame();
 
-    });
 }
 
 module.exports = {

@@ -6,7 +6,7 @@ module.exports = {
   //dotValue: 1000000,
   showCircles:true,
   showMetaBalls:false,
-  metaballResolution: 350,
+  metaballResolution: 150,
   capture: false,
   captureWidth: 1280,
   captureHeight: 720,
