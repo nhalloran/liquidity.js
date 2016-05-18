@@ -58,7 +58,7 @@ var CircleMaterial = function(params){
 
 
 			"uniform vec3 color;",
-      "uniform sampler2D map;",
+    //  "uniform sampler2D map;",
       "uniform float epsilon;",
       "uniform float opacity;",
       "varying vec2 vUv;",
@@ -73,7 +73,6 @@ var CircleMaterial = function(params){
 			"void main() {",
 
 
-      "vec4 rgba = texture2D(map,  vUv);",
       //"vec4 reveal = texture2D(revealMap,  vUv);",
 
 

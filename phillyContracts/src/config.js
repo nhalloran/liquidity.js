@@ -6,11 +6,11 @@ module.exports = {
   //dotValue: 1000000,
   showCircles:true,
   showMetaBalls:false,
-  metaballResolution: 150,
+  metaballResolution: 450,
   capture: false,
   captureWidth: 1280,
   captureHeight: 720,
-  captureFPS: 60,
-  captureDuration:15 // seconds
+  captureFPS: 30,
+  captureDuration:19 // seconds
 
 };

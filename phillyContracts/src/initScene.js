@@ -72,9 +72,11 @@ function init() {
 
   scene = new THREE.Scene();
 
-  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
   directionalLight.position.set(0.3, -1, 2);
   scene.add(directionalLight);
+  var ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambientLight);
 
   var circleMat = new CircleMaterial({
     color: 0xff0000,
@@ -195,7 +197,7 @@ function init() {
 
 
 
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   //  renderer.autoClear = false;
 
   renderer.gammaInput = true;
@@ -246,12 +248,11 @@ function init() {
 
 
       node.foci = (i / nodes.length > ts.t) ? pNode.foci : nNode.foci;
-      circleGeo.setSingleColor(i, {
-        r: mix(pNode.color[0], nNode.color[0], colorT),
-        g: mix(pNode.color[1], nNode.color[1], colorT),
-        b: mix(pNode.color[2], nNode.color[2], colorT)
-      });
-
+      node.color.r =  mix(pNode.color[0], nNode.color[0], colorT);
+      node.color.g =  mix(pNode.color[1], nNode.color[1], colorT);
+      node.color.b =  mix(pNode.color[2], nNode.color[2], colorT);
+      if (showCircles)
+        circleGeo.setSingleColor(i, node.color );
     });
   }
 
@@ -342,8 +343,8 @@ function init() {
     //test
     animateToState('wholeCity', 'wholeCity', 10);
     animateToState('deptByCat', 'wholeCity', 3500);
-    animateToState('catTotals', 'deptByCat', 7000);
-    animateToState('wholeCity', 'catTotals', 10500);
+    animateToState('catTotals', 'deptByCat', 9000);
+    animateToState('wholeCity', 'catTotals', 13500);
   } else {
     animateToState('wholeCity');
   }

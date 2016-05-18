@@ -37,7 +37,6 @@ var eduDistrictSpending2015 = 2864005 * 1000;
 
 var catsById = {};
 cats.forEach(function(cat, i) {
-  cat.x = -500 + 200 * i;
   cat.colorObj = new THREE.Color(cat.color);
   cat.depts = [];
   cat.cid = i;
@@ -66,6 +65,18 @@ depts.forEach(function(dept, i) {
 
 });
 
+var catX = 0;
+cats.forEach(function(cat, i) {
+  cat.x = catX;
+  lt = cat.t;
+  nt = (cats[i+1]) ? cats[i+1].t : 0;
+  if(i+1 < cats.length) catX += 70 + (lt + nt) / 33000000;
+});
+cats.forEach(function(cat, i) {
+  cat.x -= catX/2;
+});
+
+
 var nodes = [];
 
 depts.forEach(function(dept, did) {
@@ -79,7 +90,8 @@ depts.forEach(function(dept, did) {
       y: initialPos[1],
       z: 0,
       nid: nid,
-      did: did
+      did: did,
+      color: {r:0,g:0,b:0}
     };
     nodes.push(node);
   }

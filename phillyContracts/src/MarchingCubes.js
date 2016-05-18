@@ -40,6 +40,11 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 		this.zd = this.size2;
 
 		this.field = new Float32Array( this.size3 );
+
+		this.colorField = new Int8Array( this.size3); // only for a color lookup
+		this.colorLookup = [];
+		this.colorObjLookup = [];
+
 		this.normal_cache = new Float32Array( this.size3 * 3 );
 
 		// temp buffers used in polygonize
@@ -70,7 +75,12 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 
 			this.colorArray   = new Float32Array( this.maxCount * 3 );
 
+			//set black as default
+			this.getColorId(0x000000);
+
 		}
+
+
 
 	};
 
@@ -326,6 +336,7 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 	this.posnormtriv = function( pos, norm, o1, o2, o3, renderCallback ) {
 
 		var c = this.count * 3;
+		var color;
 
 		// positions
 
@@ -376,17 +387,23 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 
 		if ( this.enableColors ) {
 
-			this.colorArray[ c ] 	 = pos[ o1 ];
-			this.colorArray[ c + 1 ] = pos[ o1 + 1 ];
-			this.colorArray[ c + 2 ] = pos[ o1 + 2 ];
+			color = this.getColorAtPos( pos[ o1 ], pos[ o1 + 1 ], pos[ o1 + 2]);
 
-			this.colorArray[ c + 3 ] = pos[ o2 ];
-			this.colorArray[ c + 4 ] = pos[ o2 + 1 ];
-			this.colorArray[ c + 5 ] = pos[ o2 + 2 ];
+			this.colorArray[ c ] 	 = color.r;
+			this.colorArray[ c + 1 ] = color.g;
+			this.colorArray[ c + 2 ] = color.b;
 
-			this.colorArray[ c + 6 ] = pos[ o3 ];
-			this.colorArray[ c + 7 ] = pos[ o3 + 1 ];
-			this.colorArray[ c + 8 ] = pos[ o3 + 2 ];
+			color = this.getColorAtPos( pos[ o2 ], pos[ o2 + 1 ], pos[ o2 + 2]);
+
+			this.colorArray[ c + 3 ] = color.r;
+			this.colorArray[ c + 4 ] = color.g;
+			this.colorArray[ c + 5 ] = color.b;
+
+			color = this.getColorAtPos( pos[ o3 ], pos[ o3 + 1 ], pos[ o3 + 2]);
+
+			this.colorArray[ c + 6 ] = color.r;
+			this.colorArray[ c + 7 ] = color.g;
+			this.colorArray[ c + 8 ] = color.b;
 
 		}
 
@@ -455,6 +472,27 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 
 	};
 
+	this.getColorId = function(color){
+		var hex = ( color.r * 255 ) << 16 ^ ( color.g * 255 ) << 8 ^ ( color.b * 255 ) << 0;
+		var id = this.colorLookup.indexOf(hex);
+		if (id !== -1) return id;
+		this.colorLookup.push(hex);
+		this.colorObjLookup.push(new THREE.Color(color.r, color.g, color.b));
+		return this.colorLookup.length - 1;
+	};
+
+
+	this.getColorAtPos = function(x,y,z){
+		var xi = Math.round((x/2 + 0.5) * this.size);
+		var yi = Math.round((y/2 + 0.5) * this.size);
+		z = 0;
+		var zi = Math.round((z/2 + 0.5) * this.size);
+		var colorId = this.colorField[zi * this.size2 + yi * this.size + xi];
+		if (colorId === undefined) colorId = 0;
+	//	debugger;
+		return this.colorObjLookup[colorId];
+	};
+
 	/////////////////////////////////////
 	// Metaballs
 	/////////////////////////////////////
@@ -462,7 +500,7 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 	// Adds a reciprocal ball (nice and blobby) that, to be fast, fades to zero after
 	// a fixed distance, determined by strength and subtract.
 
-	this.addBall = function( ballx, bally, ballz, strength, subtract ) {
+	this.addBall = function( ballx, bally, ballz, strength, subtract,color ) {
 
 		// Let's solve the equation to find the radius:
 		// 1.0 / (0.000001 + radius^2) * strength - subtract = 0
@@ -471,10 +509,18 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 		// radius^2 = strength / subtract
 		// radius = sqrt(strength / subtract)
 
+		// asumes color is hex
+		var colorId;
+		if (color) colorId = this.getColorId(color);
+
+
+
 		var radius = this.size * Math.sqrt( strength / subtract ),
 			zs = ballz * this.size,
 			ys = bally * this.size,
 			xs = ballx * this.size;
+
+		if(color) radius *= 2;
 
 		var min_z = Math.floor( zs - radius ); if ( min_z < 1 ) min_z = 1;
 		var max_z = Math.floor( zs + radius ); if ( max_z > this.size - 1 ) max_z = this.size - 1;
@@ -482,6 +528,7 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 		var max_y = Math.floor( ys + radius ); if ( max_y > this.size - 1 ) max_y = this.size - 1;
 		var min_x = Math.floor( xs - radius ); if ( min_x < 1  ) min_x = 1;
 		var max_x = Math.floor( xs + radius ); if ( max_x > this.size - 1 ) max_x = this.size - 1;
+
 
 
 		// Don't polygonize in the outer layer because normals aren't
@@ -506,6 +553,14 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 					fx = x / this.size - ballx;
 					val = strength / ( 0.000001 + fx * fx + fy2 + fz2 ) - subtract;
 					if ( val > 0.0 ) this.field[ y_offset + x ] += val;
+
+					if (color){
+						val = strength * 1.6 / ( 0.000001 + fx * fx + fy2 + fz2 ) - subtract;
+						if ( val > 0.0 ) this.colorField[ y_offset + x ] = colorId;
+
+					}
+
+
 
 				}
 

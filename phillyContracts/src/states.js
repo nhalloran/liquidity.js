@@ -118,16 +118,7 @@ states.deptByCat = function() {
         did: dept.did
 
       };
-      //temp
-      /*
-      if (textObjects['dept_t_' + dept.did]){
-        textObjects['dept_t_' + dept.did].position.x = cat.x;
-        textObjects['dept_t_' + dept.did].position.y = yC;
-        textObjects['dept_n_' + dept.did].position.x = cat.x;
-        textObjects['dept_n_' + dept.did].position.y = yC;
 
-      }
-      */
 
       state.focis.push(foci);
       deptFoci[dept.did] = foci;

@@ -1,7 +1,7 @@
 //from: https://docs.google.com/spreadsheets/d/1HxbC7asZEdwo1JO-b31LlMHEBRtUi0wqOpWvL3Lo4gs/edit#gid=54479123
 
 module.exports = [
-  {id:'lawFire', name:'Fire & Law Enforcement', color: 0x16a8cd},
+  {id:'lawFire', name:'Fire & Law', color: 0x16a8cd},
   {id:'healthHuman', name:'Health & Human Services', color: 0x775df8},
   {id:'housing', name:'Housing', color: 0xb579d8},
   {id:'infastructure', name:'Infastructure', color: 0xb8aa95},

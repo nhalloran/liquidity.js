@@ -1,6 +1,8 @@
 var THREE = require('three');
 var MarchingCubes = require('./MarchingCubes');
 var config = require('./config');
+var model = require('./model');
+var depts = model.depts;
 
 
 //test
@@ -17,7 +19,7 @@ var config = require('./config');
       var posFix = {x:0.5,y:0.5, z:0.5}
 
       effect.position.set( -posFix.x, -posFix.y, -posFix.z );
-      effect.scale.set( scaleFix/2, scaleFix/2, scaleFix/2 );
+      effect.scale.set( scaleFix/2, scaleFix/2, scaleFix/2 * 0.7);
 
       effect.enableUvs = false;
     //  effect.enableColors = false;
@@ -60,7 +62,7 @@ var config = require('./config');
 
   			for ( i = 0; i < nodes.length; i ++ ) {
           var node = nodes[i];
-  				effect.addBall(node.x/scaleFix + posFix.x, node.y/scaleFix + posFix.y, posFix.z, strength, subtract);
+  				effect.addBall(node.x/scaleFix + posFix.x, node.y/scaleFix + posFix.y, posFix.z, strength, subtract, node.color);
 
   			}
 
