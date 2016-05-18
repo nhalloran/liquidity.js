@@ -1,9 +1,7 @@
 var extend = require('./util/extend');
 var SDFMaterial = require('./SDFMaterial');
 var BufferedPlanesGeometry = require('./BufferedPlanesGeometry');
-var defaultFont = require('./textSpriteFont_AndoBold256.js');
-var highRezFont = require('./textSpriteFont_AndoBold512.js');
-var fontTextureLoaders = require('./fontTextureLoaders');
+var defaultFont = require('./fonts/fontPTSansNarrowBold_256.js');
 var THREE = require('three');
 
 
@@ -37,8 +35,7 @@ var BufferedTextSDF = function(params) {
 
 
 
-    // TODO: font should be changed to parameter
-    this.font = (params.highRez) ? highRezFont : defaultFont;
+    this.font = (params.font) ? params.font : defaultFont;
 
     this.fontSize = params.fontSize;
     this.letterSpacing = params.letterSpacing || 0;
@@ -75,17 +72,12 @@ var BufferedTextSDF = function(params) {
     // instantiate a loader
 
     var material = new SDFMaterial({
-      map: new THREE.Texture(),
-      epsilon: this.font.epsilon,
+      map: params.textures[this.font.textureId],
+      epsilon: 0.11,
       color: this.color
 
     });
 
-
-    this.loadedPromise =  fontTextureLoaders[this.font.texture];
-    this.loadedPromise.then(function(texture){
-      material.uniforms.map.value = texture;
-    });
 
     var geometry = new BufferedPlanesGeometry({
       count: count
