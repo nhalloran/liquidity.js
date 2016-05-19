@@ -7,7 +7,7 @@ The animation can be rendered in real-time using circle sprites, or rendered for
 
 The first in-progress prototype to use the technique is Philly Contracts, but a more stripped down project in planned to serve as a boiler plate. Philly Contracts is supported by the <a target="_new" href='http://www.knightfoundation.org/funding-initiatives/knight-prototype-fund/'>Kight Prototype Fund</a>, and is being produced in collaboration with <a href='https://twitter.com/amanda_levinson' target='_new'>Amanda Levinson</a>.
 
-This project is its early stage. Some items on the to-do list include:
+This project is in its early stage. Some items on the to-do list include:
 
 * Provide better documentation and a better stripped down starter project.
 * Optimize performance of the Marching Cubes / metaballs, which are currently highly inneficient.
