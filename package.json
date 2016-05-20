@@ -2,6 +2,10 @@
   "name": "liquidity.js",
   "version": "1.0.0",
   "description": "Data visualization library for depicting quantities as liquid circles",
+  "scripts": {
+    "dev": "cd phillyContracts && webpack-dev-server",
+    "build": "cd phillyContracts && webpack"
+  },
   "dependencies": {
     "babyparse": "^0.4.5",
     "ccapture.js": "^1.0.3",
@@ -10,7 +14,10 @@
     "three": "^0.75.0",
     "tween.js": "^16.3.4"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "webpack": "^1.13.0",
+    "webpack-dev-server": "^1.14.1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nhalloran/liquidity.js.git"
