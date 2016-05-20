@@ -14,4 +14,13 @@ This project is in its early stage. Some items on the to-do list include:
 * Improve behavior of liquid movement to have more natural characteristics (less isolated circles)
 * Allow for multiple circle / drop size, and more precise quantities.
 
+## Getting started
 
+To run the liquidity.js demo:
+
+1. Ensure that you have Node & NPM installed by running `npm -v` - if not, [install it](https://docs.npmjs.com/getting-started/installing-node). 
+2. `git clone https://github.com/nhalloran/liquidity.js.git`
+3. `cd liquidity.js`
+4. `npm install`
+5. `npm run dev`
+6. Open your browser and go to [http://localhost:8080](http://localhost:8080).
