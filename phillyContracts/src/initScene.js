@@ -6,7 +6,14 @@ var BufferedPlanesGeometry = require('./neilviz/BufferedPlanesGeometry');
 var mix = require('./neilviz/util/mix');
 //var forceLayout = require('./force');
 var d3ForceLayout = require('./d3ForceLayout');
-var transitions = require('./transitions');
+var layoutTransitions = require('./layoutTransitions');
+var movieUpdates = require('./movieUpdates');
+var movieTweens = require('./movieTweens');
+var movieStates = require('./movieStates');
+
+var audioEl;
+
+
 
 
 var metaballs = require('./metaballs');
@@ -32,7 +39,6 @@ if (config.capture) {
 
 
 var model = require('./model');
-var states = require('./states');
 var textItems = require('./textItems');
 
 var catsById = model.catsById;
@@ -44,6 +50,8 @@ var cats = model.cats;
 
 var time = 0;
 var clock = new THREE.Clock();
+
+var objects = {};
 
 var camera, scene, renderer;
 var mesh;
@@ -61,9 +69,11 @@ var force = {
 
 function init() {
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
-  camera.position.z = 400;
+  camera.position.set(movieStates.initial.camX, movieStates.initial.camY, movieStates.initial.camZ);
 
   var textObjects = textItems.getObjects();
+
+  audioEl = document.getElementById('narration');
 
 
   scene = new THREE.Scene();
@@ -200,12 +210,13 @@ function init() {
   }
   renderer.setClearColor(0xffffff, 1);
 
-  document.body.appendChild(renderer.domElement);
+  var stageEl = document.getElementById('stage');
+  stageEl.appendChild(renderer.domElement);
   //
   if (!config.capture) window.addEventListener('resize', onWindowResize, false);
 
 
-  transitions = transitions({
+  layoutTransitions = layoutTransitions({
     textObjects: textObjects,
     showCircles: showCircles,
     nodes: nodes,
@@ -215,26 +226,39 @@ function init() {
     force: force,
   });
 
-  transitions.gotoState('wholeCity');
+  // movie init
+  // should setup objects object before layoutTransitions
+  objects.camera = camera;
+  if (config.movie){
+    movieUpdates = movieUpdates({
+      layoutTransitions: layoutTransitions,
+      objects: objects
+    });
+    movieTweens = movieTweens({
+      movieUpdates: movieUpdates
+    });
+    movieTweens.forEach(function(tween){
+      tween.start();
+    });
+
+  }
+
+
+  if (config.movie)
+    layoutTransitions.gotoMovieState(0);
+  else
+    layoutTransitions.gotoState('wholeCity');
 
   //force.friction(0);
 
 
 
-  if (config.capture) {
-    //test
-    transitions.animateToState('wholeCity', 'wholeCity', 10);
-    transitions.animateToState('deptByCat', 'wholeCity', 3500);
-    transitions.animateToState('catTotals', 'deptByCat', 9000);
-    transitions.animateToState('wholeCity', 'catTotals', 13500);
-  } else {
-    transitions.animateToState('wholeCity');
-  }
+
 
 
 
   renderer.domElement.onclick = function() {
-    transitions.nextState();
+    layoutTransitions.nextState();
   };
 
   //for camera positioning
@@ -254,7 +278,7 @@ function onWindowResize() {
 
 function animate() {
   requestAnimationFrame(animate);
-  time = clock.getElapsedTime();
+  time = (config.movie) ? audioEl.currentTime : clock.getElapsedTime();
   TWEEN.update(time * 1000);
   force.tick();
   //  var delta = clock.getDelta();

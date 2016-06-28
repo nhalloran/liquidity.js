@@ -5,7 +5,7 @@ var textures = require('./textures').textures;
 
 
 var model = require('./model');
-var states = require('./states');
+var layoutStates = require('./layoutStates');
 var cats = model.cats;
 var depts = model.depts;
 
@@ -51,7 +51,7 @@ var params = {
 };
 
 var focisByCid = [];
-states.catTotals.focis.forEach(function(foci){
+layoutStates.catTotals.focis.forEach(function(foci){
   focisByCid[foci.cid] = foci;
 });
 
@@ -64,7 +64,7 @@ cats.forEach(function(cat){
 
 });
 var focisByDid = [];
-states.deptByCat.focis.forEach(function(foci){
+layoutStates.deptByCat.focis.forEach(function(foci){
   focisByDid[foci.did] = foci;
 });
 
