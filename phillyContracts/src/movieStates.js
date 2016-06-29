@@ -12,10 +12,11 @@ var statesArray = [{
   camX: 0,
   camY: 0,
   camZ: 100,
+  camRotX: 0,
 },
 {
   id: 'initialPullback',
-  camZ:layoutStates.wholeCity.camPos.z,
+  camZ:layoutStates.wholeCity.camPos.z+50,
   layout:1,
 
 },
@@ -29,10 +30,20 @@ var statesArray = [{
 
 },{
   id: 'groupByCats',
+  camY:layoutStates.catTotals.camPos.y,
   layout:3,
 },{
   id: 'backToDepts',
   layout:4,
+  camZ: 700,
+  camY: -300,
+  //camRotX: -0.3,
+},{
+  id: 'povertyExamples',
+  camX:layoutStates.deptByCat.camPos.x,
+  camY:layoutStates.deptByCat.camPos.y,
+  camZ:layoutStates.deptByCat.camPos.z,
+  //camRotX: -0.3,
 }
 ];
 

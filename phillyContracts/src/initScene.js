@@ -263,6 +263,7 @@ function init() {
 
   //for camera positioning
   window._cp = camera.position;
+  window._cr = camera.rotation;
   window.metaballs = metaballs;
 
 }

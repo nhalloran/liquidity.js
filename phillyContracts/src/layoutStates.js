@@ -1,6 +1,9 @@
 var model = require('./model');
 var extend = require('./neilviz/util/extend');
 
+var radiusSquared = model.radiusSquared;
+var radius = model.radius;
+
 
 var catsById = model.catsById;
 var depts = model.depts;
@@ -56,7 +59,7 @@ states.wholeCity = function() {
   var foci = {
     x: 0,
     y: 0,
-    distSq: model.totalBudget * 0.0000035
+    distSq: radiusSquared(model.totalBudget)
   };
 
   var state = {
@@ -96,7 +99,7 @@ states.deptByCat = function() {
     camPos:{
       x:0,
       y:0,
-      z:450
+      z:490
     },
   };
 
@@ -108,17 +111,20 @@ states.deptByCat = function() {
     cat.depts.sort(function(a, b) {
       return b.t - a.t;
     });
-    yC = 100;
+    yC = 200;
     cat.depts.forEach(function(dept) {
 
       state.text.push('dept_t_' + dept.did);
       state.text.push('dept_n_' + dept.did);
 
+      yC -= radius(dept.t);
+
+
 
       var foci = {
         x: cat.x,
         y: yC,
-        distSq: dept.t * 0.0000035,
+        distSq: radiusSquared(dept.t),
         did: dept.did
 
       };
@@ -126,7 +132,7 @@ states.deptByCat = function() {
 
       state.focis.push(foci);
       deptFoci[dept.did] = foci;
-      yC -= Math.sqrt(dept.t) * 0.0035 + 30;
+      yC -= radius(dept.t) + model.deptNameScale(dept.t)*2 + 10;
     });
   });
 
@@ -149,8 +155,8 @@ states.catTotals = function() {
     text: [],
     camPos:{
       x:0,
-      y:0,
-      z:450
+      y:20,
+      z:490
     },
   };
 
@@ -163,8 +169,8 @@ states.catTotals = function() {
 
     var foci = {
         x: cat.x,
-        y: 10,
-        distSq: cat.t * 0.0000035,
+        y: 200 - radius(cat.t),
+        distSq: radiusSquared(cat.t),
         cid: cat.cid
 
       };
@@ -182,6 +188,7 @@ states.catTotals = function() {
       */
   });
 
+
   nodes.forEach(function(node, i) {
     state.nodes.push({
       nid: i,
@@ -192,6 +199,15 @@ states.catTotals = function() {
 
   return state;
 }();
+
+
+states.deptByCatHeaders = extend({},states.deptByCat);
+states.deptByCatHeaders.text = states.deptByCatHeaders.text.slice(0);
+
+states.catTotals.text.forEach(function(txt){
+  if (txt.substring(0,5) === 'cat_n') states.deptByCatHeaders.text.push(txt);
+});
+
 
 
 module.exports = states;

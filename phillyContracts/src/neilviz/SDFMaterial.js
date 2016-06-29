@@ -79,11 +79,11 @@ var SDFMaterial = function(params){
       uniforms: uniforms,
       fragmentShader: fragmentShader,
       vertexShader: vertexShader,
-      derivatives: true,
       transparent: true,
       name: 'sdf',  //??
 
     });
+    this.extensions.derivatives = true;
 
     this.envMap = params.envMap;
 

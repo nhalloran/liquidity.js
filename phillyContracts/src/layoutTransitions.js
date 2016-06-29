@@ -69,7 +69,7 @@ module.exports = function(params) {
             var item = textObjects[key];
             var nOpacity = (nText.indexOf(key) >= 0) ? 1 : -1;
             var pOpacity = (pText.indexOf(key) >= 0) ? 1 : -1;
-            var opacity = Math.max(0,mix(pOpacity,nOpacity,ts.t));
+            var opacity = Math.max(0,mix(pOpacity,nOpacity,ts.t)) * item.opFactor;
             item.material.uniforms.opacity.value = opacity;
             item.visible = opacity > 0;
 
@@ -168,8 +168,8 @@ module.exports = function(params) {
 
         textKeys.forEach(function(key) {
             var item = textObjects[key];
-            var nOpacity = (nText.indexOf(key) >= 0) ? 1 : 0;
-            var pOpacity = (pText.indexOf(key) >= 0) ? 1 : 0;
+            var nOpacity = item.opFactor * (nText.indexOf(key) >= 0) ? 1 : 0;
+            var pOpacity = item.opFactor * (pText.indexOf(key) >= 0) ? 1 : 0;
 
             if (pOpacity && !nOpacity)
                 textTweens.push(new TWEEN.Tween({

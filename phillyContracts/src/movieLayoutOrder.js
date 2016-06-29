@@ -3,5 +3,5 @@ module.exports = [
   'wholeCity',
   'deptByCat',
   'catTotals',
-  'deptByCat',
+  'deptByCatHeaders',
 ];

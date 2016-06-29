@@ -92,6 +92,9 @@ var CircleMaterial = function(params){
       '				#endif',
 
 
+//'				gl_FragColor = vec4( color, 1.0);',
+
+
       //
 
       "}"
@@ -103,11 +106,12 @@ var CircleMaterial = function(params){
       uniforms: uniforms,
       fragmentShader: fragmentShader,
       vertexShader: vertexShader,
-      derivatives: true,
       transparent: true,
       name: 'circle',  //??
 
     });
+    this.extensions.derivatives = true;
+
 
 
 

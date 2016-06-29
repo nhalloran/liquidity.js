@@ -9,6 +9,18 @@ var deptsLookup = {};
 
 var missingDepts = [];
 
+var radiusSquared = function(t){
+  return t * 0.0000035;
+};
+var radius = function(t){
+  return Math.sqrt(radiusSquared(t));
+};
+
+var deptNameScale = function(t){
+  var scale = radius(t) * 0.5;
+  return Math.max(10,Math.min(18,scale));
+};
+
 depts.forEach(function(dept){
   dept.t = 0;
   deptsLookup[dept.n] = dept;
@@ -70,7 +82,7 @@ cats.forEach(function(cat, i) {
   cat.x = catX;
   lt = cat.t;
   nt = (cats[i+1]) ? cats[i+1].t : 0;
-  if(i+1 < cats.length) catX += 70 + (lt + nt) / 33000000;
+  if(i+1 < cats.length) catX += 80 + (lt + nt) / 33000000;
 });
 cats.forEach(function(cat, i) {
   cat.x -= catX/2;
@@ -114,5 +126,8 @@ module.exports = {
   dotValue: dotValue,
   nodes: nodes,
   totalBudget: totalBudget,
+  radiusSquared: radiusSquared,
+  radius: radius,
+  deptNameScale: deptNameScale
 
 };
