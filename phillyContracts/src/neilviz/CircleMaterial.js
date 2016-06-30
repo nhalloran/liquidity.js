@@ -8,13 +8,13 @@ var CircleMaterial = function(params){
   var color = (params.color) ? params.color : 0xffffff;
 
   var indivColors = !!params.indivColors;
-
+  var epsilon = params.epsilon || 0.02;
 
   var uniforms = {
 
     color:     { type: "c", value: new THREE.Color( color ) },
     opacity:   { type: "f", value: 1}	,
-    epsilon:   { type: "f", value: 0.02}	,
+    epsilon:   { type: "f", value: epsilon}	,
 
 };
 

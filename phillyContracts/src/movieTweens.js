@@ -47,14 +47,18 @@ module.exports = function(params) {
   var tweens = [
 
     //time tween
-    simpleTween(states.initialPullback,'camZ',INITIAL_PULLBACK_DUR + 1000).easing(InOut),
+    simpleTween(states.initialPullback,'camZ',INITIAL_PULLBACK_DUR).easing(InOut),
     simpleTween(states.initialPullback, 'layout', 2000)
-      .delay(START + INITIAL_PULLBACK_DUR * 0.5),
+      .delay(START + INITIAL_PULLBACK_DUR * 0.4),
+
+    simpleTween(states.initialPullback,'reflect',1000)
+      .delay(START + INITIAL_PULLBACK_DUR * 0.7),
+
 
     camTween(states.splitToDepts, 2000)
-      .delay(SPLIT_TO_DEPTS_START + 1000).easing(InOut),
-    simpleTween(states.splitToDepts, 'layout', 2000)
-      .delay(SPLIT_TO_DEPTS_START),
+      .delay(SPLIT_TO_DEPTS_START).easing(InOut),
+    simpleTween(states.splitToDepts, 'layout', 1000)
+      .delay(SPLIT_TO_DEPTS_START + 400),
 
     simpleTween(states.groupByCats, 'layout', 2000)
       .delay(GROUP_BY_CAT_START),

@@ -51,7 +51,8 @@ var d3ForceLayout = function() {
 
   force.tick = function() {
     // simulated annealing, basically
-    if ((alpha *= 0.99) < 0.005) {
+    //if ((alpha = 0.99) < 0.005) {
+    if ((alpha = 0.05) < 0.005) {
       timer = null;
       event.end({type: "end", alpha: alpha = 0});
       return true;

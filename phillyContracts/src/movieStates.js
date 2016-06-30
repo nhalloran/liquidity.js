@@ -13,11 +13,13 @@ var statesArray = [{
   camY: 0,
   camZ: 100,
   camRotX: 0,
+  reflect:1
 },
 {
   id: 'initialPullback',
   camZ:layoutStates.wholeCity.camPos.z+50,
   layout:1,
+  reflect:0
 
 },
 {

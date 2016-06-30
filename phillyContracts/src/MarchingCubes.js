@@ -490,7 +490,7 @@ var MarchingCubes = function ( resolution, material, enableUvs, enableColors ) {
 		var colorId = this.colorField[zi * this.size2 + yi * this.size + xi];
 		if (colorId === undefined) colorId = 0;
 	//	debugger;
-		return this.colorObjLookup[colorId];
+		return this.colorObjLookup[colorId] || new THREE.Color();
 	};
 
 	/////////////////////////////////////

@@ -99,7 +99,7 @@ states.deptByCat = function() {
     camPos:{
       x:0,
       y:0,
-      z:490
+      z:500
     },
   };
 
@@ -155,8 +155,8 @@ states.catTotals = function() {
     text: [],
     camPos:{
       x:0,
-      y:20,
-      z:490
+      y:100,
+      z:500
     },
   };
 

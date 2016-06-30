@@ -10,6 +10,8 @@ var layoutTransitions = require('./layoutTransitions');
 var movieUpdates = require('./movieUpdates');
 var movieTweens = require('./movieTweens');
 var movieStates = require('./movieStates');
+var backdrop = require('./backdrop');
+var highlights = require('./highlights');
 
 var audioEl;
 
@@ -78,11 +80,15 @@ function init() {
 
   scene = new THREE.Scene();
 
-  var directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
-  directionalLight.position.set(0.3, -1, 2);
-  scene.add(directionalLight);
-  var ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-  scene.add(ambientLight);
+  //var directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
+  //directionalLight.position.set(0.3, -1, 2);
+  //scene.add(directionalLight);
+
+  var pointLight = new THREE.PointLight(0xffffff,1,13000);
+  pointLight.position.z = 2000;
+  scene.add(pointLight);
+  var ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+  //scene.add(ambientLight);
 
   var circleMat = new CircleMaterial({
     color: 0xff0000,
@@ -93,6 +99,9 @@ function init() {
     height = 500;
 
   var ysum = 0;
+
+
+  scene.add(backdrop);
 
 
 
@@ -229,6 +238,7 @@ function init() {
   // movie init
   // should setup objects object before layoutTransitions
   objects.camera = camera;
+  objects.metaballs = metaballs;
   if (config.movie){
     movieUpdates = movieUpdates({
       layoutTransitions: layoutTransitions,

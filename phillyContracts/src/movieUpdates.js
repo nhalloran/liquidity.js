@@ -1,3 +1,5 @@
+var config = require('./config');
+
 module.exports = function(params) {
     var objects = params.objects;
     var layoutTransitions = params.layoutTransitions;
@@ -18,6 +20,10 @@ module.exports = function(params) {
             camPos.z = this.camX;
             camPos.y = this.camY;
             camPos.z = this.camZ;
+        },
+        reflect: function() {
+            if (config.metaballs)
+              objects.metaballs.material.reflectivity = this.val;
         },
         layout: function(){
           layoutTransitions.gotoMovieState(this.val);
