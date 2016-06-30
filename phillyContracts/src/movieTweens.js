@@ -41,6 +41,10 @@ module.exports = function(params) {
       BACK_TO_DEPTS_START = GROUP_BY_CAT_START + GROUP_BY_CAT_DUR,
       BACK_TO_DEPTS_DUR = 8000,
       POVERTY_START = BACK_TO_DEPTS_START + BACK_TO_DEPTS_DUR,
+      POVERTY_DUR = 8000,
+      PRE_SECURITY_DUR = 2000,
+      SECURITY_START= POVERTY_START + POVERTY_DUR + PRE_SECURITY_DUR,
+      SECURITY_DUR = 8000,
       DUMMYVAR = 0;
 
 
@@ -73,8 +77,32 @@ module.exports = function(params) {
     simpleTween(states.backToDepts, 'camY', BACK_TO_DEPTS_DUR * 0.8)
       .delay(BACK_TO_DEPTS_START).easing(InOut),
 
-      camTween(states.povertyExamples, 2000)
+      camTween(states.povertyExamples, POVERTY_DUR * 0.9)
         .delay(POVERTY_START).easing(InOut),
+      simpleTween(states.povertyExamples, 'lightI', 2000)
+        .delay(POVERTY_START + POVERTY_DUR * 0.1),
+      simpleTween(states.povertyExamples, 'highlightPoverty', 2000)
+      .delay(POVERTY_START + POVERTY_DUR * 0.1),
+      simpleTween(states.povertyExamples, 'highlightEpsilon', 4000)
+      .delay(POVERTY_START + POVERTY_DUR * 0.1),
+
+
+      camTween(states.securityExamples, PRE_SECURITY_DUR + SECURITY_DUR * 0.8)
+      .delay(POVERTY_START + POVERTY_DUR).easing(InOut),
+
+      simpleTween(states.preSecurity, 'lightI', PRE_SECURITY_DUR)
+        .delay(POVERTY_START + POVERTY_DUR),
+      simpleTween(states.preSecurity, 'highlightPoverty', PRE_SECURITY_DUR)
+      .delay(POVERTY_START + POVERTY_DUR),
+      simpleTween(states.preSecurity, 'highlightEpsilon', PRE_SECURITY_DUR)
+      .delay(POVERTY_START + POVERTY_DUR),
+
+      simpleTween(states.securityExamples, 'lightI', 1000)
+        .delay(SECURITY_START),
+      simpleTween(states.securityExamples, 'highlightSecurity', 2000)
+      .delay(SECURITY_START),
+      simpleTween(states.securityExamples, 'highlightEpsilon', 4000)
+      .delay(SECURITY_START),
 
   //  simpleTween(states.backToDepts, 'camRotX', 8000)
   //    .delay(BACK_TO_DEPTS_START),

@@ -9,6 +9,7 @@ var backdrop = new THREE.Mesh(geo,mat);
 backdrop.position.z = -30;
 
 highlights.position.z = 2;
+backdrop.highlights = highlights;
 backdrop.add(highlights);
 
 module.exports= backdrop;

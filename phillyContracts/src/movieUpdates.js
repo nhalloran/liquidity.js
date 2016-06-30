@@ -28,7 +28,24 @@ module.exports = function(params) {
         layout: function(){
           layoutTransitions.gotoMovieState(this.val);
         },
-        forceStart: layoutTransitions.forceStart
+        forceStart: layoutTransitions.forceStart,
+        highlightPoverty: function(){
+          objects.backdrop.highlights.states.poverty.reveal = this.val;
+            objects.backdrop.highlights.update();
+        },
+        highlightSecurity: function(){
+          objects.backdrop.highlights.states.security.reveal = this.val;
+            objects.backdrop.highlights.update();
+        },
+        highlightEpsilon: function(){
+          var epsilon = this.val;
+          objects.backdrop.highlights.circles.forEach(function(circle){
+            circle.material.uniforms.epsilon.value = epsilon;
+          });
+        },
+        lightI: function(){
+          objects.pointLight.intensity = this.val;
+        }
 
 
 

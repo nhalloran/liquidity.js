@@ -85,7 +85,7 @@ function init() {
   //scene.add(directionalLight);
 
   var pointLight = new THREE.PointLight(0xffffff,1,13000);
-  pointLight.position.z = 2000;
+  pointLight.position.z = 1800;
   scene.add(pointLight);
   var ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
   //scene.add(ambientLight);
@@ -239,6 +239,8 @@ function init() {
   // should setup objects object before layoutTransitions
   objects.camera = camera;
   objects.metaballs = metaballs;
+  objects.pointLight = pointLight;
+  objects.backdrop = backdrop;
   if (config.movie){
     movieUpdates = movieUpdates({
       layoutTransitions: layoutTransitions,
