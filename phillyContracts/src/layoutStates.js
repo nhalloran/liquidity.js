@@ -131,7 +131,7 @@ states.deptByCat = function() {
 
 
       state.focis.push(foci);
-      deptFoci[dept.did] = foci;
+      deptFoci[dept.did] = state.focis.length - 1;
       yC -= radius(dept.t) + model.deptNameScale(dept.t)*2 + 10;
     });
   });
@@ -139,8 +139,9 @@ states.deptByCat = function() {
   nodes.forEach(function(node, i) {
     state.nodes.push({
       nid: i,
-      foci: deptFoci[node.did],
-      color: hexToRgbArray(depts[node.did].cat.color)
+      foci: state.focis[deptFoci[node.did]],
+      color: hexToRgbArray(depts[node.did].cat.color),
+      fid: deptFoci[node.did]
     });
   });
 
@@ -201,12 +202,41 @@ states.catTotals = function() {
 }();
 
 
+//deptByCatHeaders
 states.deptByCatHeaders = extend({},states.deptByCat);
 states.deptByCatHeaders.text = states.deptByCatHeaders.text.slice(0);
 
 states.catTotals.text.forEach(function(txt){
   if (txt.substring(0,5) === 'cat_n') states.deptByCatHeaders.text.push(txt);
 });
+
+
+
+//by department, contracts colored
+states.deptByCatByContract = extend({},states.deptByCat);
+//clone focis, with counter for nodes needing colored
+var focisC = states.deptByCatByContract.focis.map(function(foci){
+  var dept = depts[foci.did];
+  return {cc: Math.round(dept.tc / dotValue)};
+});
+
+var nodesC = states.deptByCatByContract.nodes.map(function(n){
+  var node =  extend({},n);
+  var fociC = focisC[node.fid];
+  if (fociC.cc > 0) {
+    node.color = hexToRgbArray(0x010101);
+    fociC.cc --;
+  }
+  return node;
+});
+states.deptByCatByContract.nodes = nodesC;
+
+//pull up BH
+
+
+
+
+
 
 
 

@@ -7,6 +7,9 @@ module.exports = function(params) {
     var camRot = objects.camera.rotation;
 
     var updates = {
+        camX: function() {
+          camPos.x = this.val;
+        },
         camZ: function() {
             camPos.z = this.val;
         },
@@ -17,12 +20,12 @@ module.exports = function(params) {
             camRot.x = this.val;
         },
         cam: function() {
-            camPos.z = this.camX;
+            camPos.x = this.camX;
             camPos.y = this.camY;
             camPos.z = this.camZ;
         },
         reflect: function() {
-            if (config.metaballs)
+            if (config.showMetaBalls)
               objects.metaballs.material.reflectivity = this.val;
         },
         layout: function(){
@@ -44,7 +47,7 @@ module.exports = function(params) {
           });
         },
         lightI: function(){
-          objects.pointLight.intensity = this.val;
+          objects.pointLight.intensity = this.val * config.lightIFactor;
         }
 
 

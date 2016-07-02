@@ -4,4 +4,5 @@ module.exports = [
   'deptByCat',
   'catTotals',
   'deptByCatHeaders',
+  'deptByCatByContract'
 ];

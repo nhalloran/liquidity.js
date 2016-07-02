@@ -23,15 +23,17 @@ var deptNameScale = function(t){
 
 depts.forEach(function(dept){
   dept.t = 0;
+  dept.tc = 0;
   deptsLookup[dept.n] = dept;
 });
 
-
 budget.forEach(function(item){
   var dept = deptsLookup[item.department];
-  if (dept)
+  if (dept){
     dept.t += Number(item.total);
-  else{
+    if (Number(item.class_id) == 2 || Number(item.class_id) == 3 || Number(item.class_id) == 4)
+      dept.tc += Number(item.total);
+  }else{
     console.log('no dept match', item.department);
     if (missingDepts.indexOf(item.department) === -1)
       missingDepts.push(item.department);

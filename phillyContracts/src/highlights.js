@@ -17,7 +17,7 @@ var makeState = function(filterField) {
     layoutStates.deptByCat.focis.forEach(function(foci) {
         var dept = model.depts[foci.did];
         if (dept[filterField]) {
-            var radius = model.radius(dept.t) + 40;
+            var radius = model.radius(dept.t) + 30;
             var geo = new THREE.PlaneBufferGeometry(radius * 2, radius * 2);
             var mat = new CircleMaterial({ epsilon: 0.15 });
             var circle = new THREE.Mesh(geo, mat);
@@ -43,7 +43,7 @@ highlights.update = function() {
     stateKeys.forEach(function(key) {
         var state = states[key];
         state.circles.forEach(function(circle) {
-            circle.material.uniforms.opacity.value = state.reveal;
+            circle.material.uniforms.opacity.value = state.reveal * 0.8;
             circle.visible = (state.reveal > 0);
         });
     });

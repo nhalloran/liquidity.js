@@ -28,7 +28,7 @@ module.exports = [
   {n:"Free Library", sn:"", c:'', p:0, s:0},
   {n:"Historical Commission", sn:"", c:'', p:0, s:0},
   {n:"Human Relations Commission", sn:"", c:'', p:0, s:0},
-  {n:"Human Services", sn:"", c:'healthHuman', p:0, s:0},
+  {n:"Human Services", sn:"", c:'healthHuman', p:1, s:0},
   {n:"L&I - Board of Building Standards", sn:"Board of Building Standards", c:'', p:0, s:0},
   {n:"L&I - Board of L&I Review", sn:"Board of L&I Review", c:'', p:0, s:0},
   {n:"L&I - Zoning Board of Adjustment", sn:"Zoning Board of Adjustment", c:'', p:0, s:0},

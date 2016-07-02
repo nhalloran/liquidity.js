@@ -6,13 +6,15 @@ var config = {
   //dotValue: 1000000,
   showCircles:true,
   showMetaBalls:false,
+  showShadows:false,
   metaballResolution: 450,
   movie: true,
   capture: false, // setting capture to true sets movie to true below
   captureWidth: 1280,
   captureHeight: 720,
   captureFPS: 30,
-  captureDuration:19 // seconds
+  captureDuration:10, // seconds
+  lightIFactor: 1.4
 
 };
 

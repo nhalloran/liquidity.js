@@ -55,6 +55,11 @@ function build() {
 
     };
 
+    if (config.showMetaBalls && config.showShadows) {
+        effect.castShadow = true;
+    //    effect.receiveShadow = true;
+    }
+
 
     return effect;
 

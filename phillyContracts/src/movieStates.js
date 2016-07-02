@@ -16,13 +16,13 @@ var statesArray = [{
         reflect: 1,
         lightI: 1,
         highlightPoverty: 0,
-        highlightEpsilon: 0.5
+        highlightEpsilon: 1
     },
     {
         id: 'initialPullback',
         camZ: layoutStates.wholeCity.camPos.z + 50,
         layout: 1,
-        reflect: 0
+        reflect: 0.1
 
     },
     {
@@ -45,24 +45,35 @@ var statesArray = [{
         //camRotX: -0.3,
     }, {
         id: 'povertyExamples',
-        camX: -180,
+        camX: -120,
         camY: 40,
         camZ: 400,
-        lightI: 0.5,
+        lightI: 0.7,
         highlightPoverty: 1,
-        highlightEpsilon: 0.12
+        highlightEpsilon: 0.2
 
     }, {
         id: 'preSecurity',
         lightI: 1,
         highlightPoverty: 0,
-        highlightEpsilon: 0.5
+        highlightEpsilon: 1
     }, {
         id: 'securityExamples',
-        camX: -320,
-        lightI: 0.5,
+        camX: -180,
+        camZ: 450,
+        camY: -10,
+        lightI: 0.7,
         highlightSecurity: 1,
-        highlightEpsilon: 0.12
+        highlightEpsilon: 0.2
+
+    }, {
+        id: 'colorContracts',
+        camX: 0,
+        camY: -20,
+        camZ: 450,
+        layout: 5,
+        lightI: 1,
+        highlightSecurity: 0,
 
     }
 ];

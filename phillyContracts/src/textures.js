@@ -5,6 +5,7 @@ var THREE = require('three');
 var urls = {
   'PTSansNarrowBold256': '/textures/ptsansnarrow_bold_256.png',
   'PTSansNarrowRegular256': '/textures/ptsansnarrow_regular_256.png',
+  'paperNormal': '/textures/609-normal-water-color-paper.jpg',
 };
 
 

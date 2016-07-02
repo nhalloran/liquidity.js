@@ -42,9 +42,11 @@ module.exports = function(params) {
       BACK_TO_DEPTS_DUR = 8000,
       POVERTY_START = BACK_TO_DEPTS_START + BACK_TO_DEPTS_DUR,
       POVERTY_DUR = 8000,
-      PRE_SECURITY_DUR = 2000,
+      PRE_SECURITY_DUR = 900,
       SECURITY_START= POVERTY_START + POVERTY_DUR + PRE_SECURITY_DUR,
       SECURITY_DUR = 8000,
+      COLOR_CONTRACTS_START = SECURITY_START + SECURITY_DUR,
+      COLOR_CONTRACTS_DUR = 30000,
       DUMMYVAR = 0;
 
 
@@ -87,22 +89,39 @@ module.exports = function(params) {
       .delay(POVERTY_START + POVERTY_DUR * 0.1),
 
 
-      camTween(states.securityExamples, PRE_SECURITY_DUR + SECURITY_DUR * 0.8)
+      camTween(states.securityExamples, PRE_SECURITY_DUR + SECURITY_DUR * 0.9)
       .delay(POVERTY_START + POVERTY_DUR).easing(InOut),
 
       simpleTween(states.preSecurity, 'lightI', PRE_SECURITY_DUR)
         .delay(POVERTY_START + POVERTY_DUR),
-      simpleTween(states.preSecurity, 'highlightPoverty', PRE_SECURITY_DUR)
+      simpleTween(states.preSecurity, 'highlightPoverty', PRE_SECURITY_DUR )
       .delay(POVERTY_START + POVERTY_DUR),
       simpleTween(states.preSecurity, 'highlightEpsilon', PRE_SECURITY_DUR)
       .delay(POVERTY_START + POVERTY_DUR),
 
-      simpleTween(states.securityExamples, 'lightI', 1000)
-        .delay(SECURITY_START),
-      simpleTween(states.securityExamples, 'highlightSecurity', 2000)
-      .delay(SECURITY_START),
-      simpleTween(states.securityExamples, 'highlightEpsilon', 4000)
-      .delay(SECURITY_START),
+      simpleTween(states.securityExamples, 'lightI', 800)
+      .delay(SECURITY_START + SECURITY_DUR * 0.1),
+      simpleTween(states.securityExamples, 'highlightSecurity', 800)
+      .delay(SECURITY_START + SECURITY_DUR * 0.1),
+      simpleTween(states.securityExamples, 'highlightEpsilon', 1500)
+      .delay(SECURITY_START + SECURITY_DUR * 0.1),
+
+
+      simpleTween(states.colorContracts, 'lightI', 400)
+      .delay(COLOR_CONTRACTS_START),
+      simpleTween(states.colorContracts, 'highlightSecurity', 400)
+      .delay(COLOR_CONTRACTS_START),
+
+      simpleTween(states.colorContracts, 'layout', COLOR_CONTRACTS_DUR * 0.1)
+        .delay(COLOR_CONTRACTS_START),
+     simpleTween(states.colorContracts,'camX',COLOR_CONTRACTS_DUR * 0.5).easing(InOut)
+     .delay(COLOR_CONTRACTS_START),
+     simpleTween(states.colorContracts,'camY',COLOR_CONTRACTS_DUR * 0.9).easing(InOut)
+     .delay(COLOR_CONTRACTS_START),
+     simpleTween(states.colorContracts,'camZ',COLOR_CONTRACTS_DUR * 0.9).easing(InOut)
+     .delay(COLOR_CONTRACTS_START),
+
+
 
   //  simpleTween(states.backToDepts, 'camRotX', 8000)
   //    .delay(BACK_TO_DEPTS_START),

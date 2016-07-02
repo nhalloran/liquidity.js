@@ -12,6 +12,8 @@ var movieTweens = require('./movieTweens');
 var movieStates = require('./movieStates');
 var backdrop = require('./backdrop');
 var highlights = require('./highlights');
+var getUrlVars = require('./neilviz/util/getUrlVars');
+
 
 var audioEl;
 
@@ -70,6 +72,10 @@ var force = {
 
 
 function init() {
+
+  backdrop = backdrop();
+
+
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
   camera.position.set(movieStates.initial.camX, movieStates.initial.camY, movieStates.initial.camZ);
 
@@ -84,8 +90,17 @@ function init() {
   //directionalLight.position.set(0.3, -1, 2);
   //scene.add(directionalLight);
 
-  var pointLight = new THREE.PointLight(0xffffff,1,13000);
-  pointLight.position.z = 1800;
+  var pointLight = new THREE.PointLight(0xffffff,config.lightIFactor,5000);
+  if(config.showMetaBalls && config.showShadows){
+    pointLight.castShadow = true;
+    pointLight.shadow.camera.near = 1;
+    pointLight.shadow.camera.far = 30;
+       pointLight.shadowCameraVisible = true;
+    pointLight.shadow.bias = 0.01;
+
+  }
+
+  pointLight.position.z = 1500;
   scene.add(pointLight);
   var ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
   //scene.add(ambientLight);
@@ -217,6 +232,12 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
   }
+
+  if (config.showMetaBalls && config.showShadows) {
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
+  }
+
   renderer.setClearColor(0xffffff, 1);
 
   var stageEl = document.getElementById('stage');
@@ -277,6 +298,10 @@ function init() {
   window._cp = camera.position;
   window._cr = camera.rotation;
   window.metaballs = metaballs;
+
+
+  var urlVars =  getUrlVars();
+  if (urlVars.goto) audioEl.currentTime = Number(urlVars.goto);
 
 }
 
