@@ -80,6 +80,8 @@ function init() {
   camera.position.set(movieStates.initial.camX, movieStates.initial.camY, movieStates.initial.camZ);
 
   var textObjects = textItems.getObjects();
+  window.textObjects = textObjects;
+
 
   audioEl = document.getElementById('narration');
 

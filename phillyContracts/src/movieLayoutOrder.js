@@ -4,5 +4,6 @@ module.exports = [
   'deptByCat',
   'catTotals',
   'deptByCatHeaders',
-  'deptByCatByContract'
+  'deptByCatByContract',
+  'behavioralHealth'
 ];

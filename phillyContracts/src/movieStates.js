@@ -75,8 +75,12 @@ var statesArray = [{
         lightI: 1,
         highlightSecurity: 0,
 
-    }
-];
+      }, {
+          id: 'behavioralHealth',
+          layout: 6,
+
+      }
+    ];
 
 
 var states = {};

@@ -86,6 +86,18 @@ depts.forEach(function(dept){
 });
 
 
+//behavioral Health
+var bhFoci;
+layoutStates.behavioralHealth.focis.forEach(function(foci){
+  if(foci.did === model.behavioralHealthDid) bhFoci = foci;
+});
+params.bh_ct =  {items:numToTextItems(model.BHContractTotal, 0.09 + model.BHContractTotal/4400000000), x:bhFoci.x, y:bhFoci.y};
+var bhNonContractTotal = depts[model.behavioralHealthDid].t - model.BHContractTotal;
+params.bh_nct =  {items:numToTextItems(bhNonContractTotal, 0.09 + bhNonContractTotal/4400000000), x:bhFoci.x, y:bhFoci.y-100};
+
+
+
+
 
 var keys = Object.keys(params);
 var allPromises = [];
@@ -111,6 +123,8 @@ function getObjects(){
 
 }
 //start out w zero opacity
+
+
 
 
 

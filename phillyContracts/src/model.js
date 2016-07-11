@@ -21,18 +21,24 @@ var deptNameScale = function(t){
   return Math.max(10,Math.min(18,scale));
 };
 
-depts.forEach(function(dept){
+depts.forEach(function(dept,did){
   dept.t = 0;
   dept.tc = 0;
   deptsLookup[dept.n] = dept;
+
 });
+
+var BHContractTotal = 0;
 
 budget.forEach(function(item){
   var dept = deptsLookup[item.department];
   if (dept){
     dept.t += Number(item.total);
-    if (Number(item.class_id) == 2 || Number(item.class_id) == 3 || Number(item.class_id) == 4)
+    if (Number(item.class_id) == 2 || Number(item.class_id) == 3 || Number(item.class_id) == 4){
       dept.tc += Number(item.total);
+      if (dept.sn === 'Behavioral Health') BHContractTotal += Number(item.total);
+
+    }
   }else{
     console.log('no dept match', item.department);
     if (missingDepts.indexOf(item.department) === -1)
@@ -44,6 +50,12 @@ budget.forEach(function(item){
 var depts = depts.filter(function(dept){
   return dept.t > 0;
 });
+var behavioralHealthDid;
+depts.forEach(function(dept, did){
+  if(dept.sn === 'Behavioral Health') behavioralHealthDid = did;
+});
+
+
 
 
 
@@ -130,6 +142,8 @@ module.exports = {
   totalBudget: totalBudget,
   radiusSquared: radiusSquared,
   radius: radius,
-  deptNameScale: deptNameScale
+  deptNameScale: deptNameScale,
+  behavioralHealthDid: behavioralHealthDid,
+  BHContractTotal: BHContractTotal
 
 };

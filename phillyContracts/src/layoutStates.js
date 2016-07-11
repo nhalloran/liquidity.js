@@ -220,11 +220,12 @@ var focisC = states.deptByCatByContract.focis.map(function(foci){
   return {cc: Math.round(dept.tc / dotValue)};
 });
 
+var bhColor = hexToRgbArray(0x010101);
 var nodesC = states.deptByCatByContract.nodes.map(function(n){
   var node =  extend({},n);
   var fociC = focisC[node.fid];
   if (fociC.cc > 0) {
-    node.color = hexToRgbArray(0x010101);
+    node.color = bhColor;
     fociC.cc --;
   }
   return node;
@@ -232,6 +233,36 @@ var nodesC = states.deptByCatByContract.nodes.map(function(n){
 states.deptByCatByContract.nodes = nodesC;
 
 //pull up BH
+
+//by department, contracts colored
+states.behavioralHealth = extend({},states.deptByCatByContract);
+states.behavioralHealth.focis = states.behavioralHealth.focis.slice(0);
+
+var bhFid;
+states.behavioralHealth.focis.forEach(function(foci,fid){
+  if(foci.did === model.behavioralHealthDid) bhFid = fid;
+});
+
+var oldFoci = extend({},states.behavioralHealth.focis[bhFid]);
+var newBhFoci = extend({},states.behavioralHealth.focis[bhFid]);
+oldFoci.distSq = 100;
+newBhFoci.y = newBhFoci.y + 100;
+states.behavioralHealth.focis.push(newBhFoci);
+states.behavioralHealth.focis[bhFid] = oldFoci;
+states.behavioralHealth.nodes = states.behavioralHealth.nodes.map(function(node){
+  if (node.fid === bhFid && node.color === bhColor) return  extend({},node,{foci:newBhFoci});
+  if (node.fid === bhFid) return extend({},node,{foci:oldFoci});
+  return node;
+});
+states.behavioralHealth.text = states.behavioralHealth.text.filter(function(txt){
+  return txt !== 'dept_t_' + model.behavioralHealthDid;
+});
+states.behavioralHealth.text.push('bh_ct');
+states.behavioralHealth.text.push('bh_nct');
+
+
+
+
 
 
 

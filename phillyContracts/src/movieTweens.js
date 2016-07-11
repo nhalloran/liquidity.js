@@ -47,6 +47,8 @@ module.exports = function(params) {
       SECURITY_DUR = 8000,
       COLOR_CONTRACTS_START = SECURITY_START + SECURITY_DUR,
       COLOR_CONTRACTS_DUR = 30000,
+      BEHAVIORAL_HEALTH_START = COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR,
+      BEHAVIORAL_HEALTH_DUR = 8000,
       DUMMYVAR = 0;
 
 
@@ -120,6 +122,10 @@ module.exports = function(params) {
      .delay(COLOR_CONTRACTS_START),
      simpleTween(states.colorContracts,'camZ',COLOR_CONTRACTS_DUR * 0.9).easing(InOut)
      .delay(COLOR_CONTRACTS_START),
+
+
+     simpleTween(states.behavioralHealth, 'layout', 1000)
+       .delay(BEHAVIORAL_HEALTH_START),
 
 
 
