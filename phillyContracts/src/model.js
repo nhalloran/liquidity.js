@@ -24,19 +24,29 @@ var deptNameScale = function(t){
 depts.forEach(function(dept,did){
   dept.t = 0;
   dept.tc = 0;
+//  dept.tp = 0;
   deptsLookup[dept.n] = dept;
 
 });
 
-var BHContractTotal = 0;
+var BHContractTotal = 0,
+    contractTotal = 0,
+    procurementTotal = 0,
+    nonContractTotal = 0;
 
 budget.forEach(function(item){
   var dept = deptsLookup[item.department];
   if (dept){
     dept.t += Number(item.total);
     if (Number(item.class_id) == 2 || Number(item.class_id) == 3 || Number(item.class_id) == 4){
+      //if (Number(item.class_id) > 2)   dept.tcp += Number(item.total);
+      if (Number(item.class_id) > 2) procurementTotal += Number(item.total);
       dept.tc += Number(item.total);
+      contractTotal += Number(item.total);
       if (dept.sn === 'Behavioral Health') BHContractTotal += Number(item.total);
+
+    } else {
+      nonContractTotal += Number(item.total);
 
     }
   }else{
@@ -79,7 +89,7 @@ depts.forEach(function(dept, i) {
   var cat = catsById[dept.c] || catsById.other;
   dept.cat = cat;
   dept.did = i; //for fast lookup
-  dept.dn = dept.sn || dept.n, //display name: short name if avail
+  dept.dn = dept.sn || dept.n; //display name: short name if avail
   cat.depts.push(dept);
   cat.t += dept.t;
 
@@ -144,6 +154,9 @@ module.exports = {
   radius: radius,
   deptNameScale: deptNameScale,
   behavioralHealthDid: behavioralHealthDid,
-  BHContractTotal: BHContractTotal
+  BHContractTotal: BHContractTotal,
+  contractTotal: contractTotal,
+  nonContractTotal: nonContractTotal,
+  procurementTotal: procurementTotal
 
 };

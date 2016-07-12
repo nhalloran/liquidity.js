@@ -5,5 +5,7 @@ module.exports = [
   'catTotals',
   'deptByCatHeaders',
   'deptByCatByContract',
-  'behavioralHealth'
+  'behavioralHealth',
+  'contractNonContract',
+  'contractProcurement'
 ];

@@ -46,9 +46,15 @@ module.exports = function(params) {
       SECURITY_START= POVERTY_START + POVERTY_DUR + PRE_SECURITY_DUR,
       SECURITY_DUR = 8000,
       COLOR_CONTRACTS_START = SECURITY_START + SECURITY_DUR,
-      COLOR_CONTRACTS_DUR = 30000,
+      COLOR_CONTRACTS_DUR = 28000,
       BEHAVIORAL_HEALTH_START = COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR,
-      BEHAVIORAL_HEALTH_DUR = 8000,
+      BEHAVIORAL_HEALTH_DUR = 14000,
+      CONSTRACT_NONCONTRACT_START = BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR,
+      CONSTRACT_NONCONTRACT_DUR = 8000,
+      CONTRACTS_IMPORTANT_START = CONSTRACT_NONCONTRACT_START + CONSTRACT_NONCONTRACT_DUR,
+      CONTRACTS_IMPORTANT_DUR = 20000,
+      PROCUREMENT_START = CONTRACTS_IMPORTANT_START + CONTRACTS_IMPORTANT_DUR,
+      PROCUREMENT_DUR = 8000,
       DUMMYVAR = 0;
 
 
@@ -126,6 +132,31 @@ module.exports = function(params) {
 
      simpleTween(states.behavioralHealth, 'layout', 1000)
        .delay(BEHAVIORAL_HEALTH_START),
+
+       simpleTween(states.behavioralHealth,'camX',BEHAVIORAL_HEALTH_DUR * 0.6).easing(InOut)
+       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0),
+       simpleTween(states.behavioralHealth,'camY',BEHAVIORAL_HEALTH_DUR * 0.6).easing(InOut)
+       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0),
+       simpleTween(states.behavioralHealth,'camZ',BEHAVIORAL_HEALTH_DUR * 0.6).easing(InOut)
+       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.1),
+
+
+
+       camTween(states.contractNonContract, 2000).easing(InOut)
+       .delay(CONSTRACT_NONCONTRACT_START),
+
+       camTween(states.contractsImportant, CONTRACTS_IMPORTANT_DUR * 0.7).easing(InOut)
+       .delay(CONTRACTS_IMPORTANT_START),
+
+
+         simpleTween(states.contractNonContract, 'layout', 2000)
+       .delay(CONSTRACT_NONCONTRACT_START + 300),
+
+       camTween(states.procurement, 2000).easing(InOut)
+       .delay(PROCUREMENT_START),
+
+       simpleTween(states.procurement, 'layout', 1000)
+       .delay(PROCUREMENT_START),
 
 
 

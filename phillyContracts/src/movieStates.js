@@ -77,7 +77,30 @@ var statesArray = [{
 
       }, {
           id: 'behavioralHealth',
+          camX: -220,
+          camY: 200,
+          camZ: 240,
           layout: 6,
+
+
+      }, {
+          id: 'contractNonContract',
+          camX: 0,
+          camY: -20,
+          camZ: 450,
+          layout: 7,
+
+
+        }, {
+            id: 'contractsImportant',
+            camZ: 370,
+
+        },
+        {
+          id: 'procurement',
+          camZ: 300,
+          camX: 270,
+          layout: 8,
 
       }
     ];
