@@ -68,42 +68,56 @@ var statesArray = [{
 
     }, {
         id: 'colorContracts',
-        camX: 0,
+      //  camX: 0,
         camY: -20,
         camZ: 450,
         layout: 5,
         lightI: 1,
         highlightSecurity: 0,
 
-      }, {
-          id: 'behavioralHealth',
-          camX: -220,
-          camY: 200,
-          camZ: 240,
-          layout: 6,
+    }, {
+        id: 'colorContractsDown',
+        camX: 100,
+        camY: -250,
+        camZ: 350,
+    }, {
+        id: 'colorContractsBack',
+        camX: 0,
+        camY: -20,
+        camZ: 450,
+    }, {
+        id: 'behavioralHealth',
+        camX: -220,
+        camY: 200,
+        camZ: 240,
+        layout: 6,
 
 
-      }, {
-          id: 'contractNonContract',
-          camX: 0,
-          camY: -20,
-          camZ: 450,
-          layout: 7,
+    }, {
+        id: 'contractNonContract',
+        camX: 0,
+        camY: -20,
+        camZ: 450,
+        layout: 7,
 
 
-        }, {
-            id: 'contractsImportant',
-            camZ: 370,
+    }, {
+        id: 'contractsImportant',
+        camZ: 370,
 
-        },
-        {
-          id: 'procurement',
-          camZ: 300,
-          camX: 270,
-          layout: 8,
+    }, {
+        id: 'procurement',
+        camZ: 300,
+        camX: 270,
+        layout: 8,
 
-      }
-    ];
+    }, {
+        id: 'profServices',
+        camZ: 180,
+        camX: 200,
+
+    }
+];
 
 
 var states = {};

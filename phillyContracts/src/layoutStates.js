@@ -246,6 +246,7 @@ states.behavioralHealth.focis.forEach(function(foci, fid) {
 var oldFoci = extend({}, states.behavioralHealth.focis[bhFid]);
 var newBhFoci = extend({}, states.behavioralHealth.focis[bhFid]);
 oldFoci.distSq = 100;
+oldFoci.y = oldFoci.y - 20;
 newBhFoci.y = newBhFoci.y + 100;
 states.behavioralHealth.focis.push(newBhFoci);
 states.behavioralHealth.focis[bhFid] = oldFoci;

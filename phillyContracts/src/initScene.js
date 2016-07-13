@@ -230,7 +230,7 @@ function init() {
     camera.updateProjectionMatrix();
 
   } else {
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(1);//window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
   }
@@ -300,6 +300,7 @@ function init() {
   window._cp = camera.position;
   window._cr = camera.rotation;
   window.metaballs = metaballs;
+  window.TWEEN = TWEEN;
 
 
   var urlVars =  getUrlVars();

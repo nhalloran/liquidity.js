@@ -54,7 +54,9 @@ module.exports = function(params) {
       CONTRACTS_IMPORTANT_START = CONSTRACT_NONCONTRACT_START + CONSTRACT_NONCONTRACT_DUR,
       CONTRACTS_IMPORTANT_DUR = 20000,
       PROCUREMENT_START = CONTRACTS_IMPORTANT_START + CONTRACTS_IMPORTANT_DUR,
-      PROCUREMENT_DUR = 8000,
+      PROCUREMENT_DUR = 14000,
+      PROFESSIONAL_START = PROCUREMENT_START + PROCUREMENT_DUR,
+      PROFESSIONAL_DUR = 14000,
       DUMMYVAR = 0;
 
 
@@ -122,12 +124,22 @@ module.exports = function(params) {
 
       simpleTween(states.colorContracts, 'layout', COLOR_CONTRACTS_DUR * 0.1)
         .delay(COLOR_CONTRACTS_START),
-     simpleTween(states.colorContracts,'camX',COLOR_CONTRACTS_DUR * 0.5).easing(InOut)
+     simpleTween(states.colorContractsDown,'camX',COLOR_CONTRACTS_DUR * 0.55).easing(InOut)
      .delay(COLOR_CONTRACTS_START),
-     simpleTween(states.colorContracts,'camY',COLOR_CONTRACTS_DUR * 0.9).easing(InOut)
-     .delay(COLOR_CONTRACTS_START),
-     simpleTween(states.colorContracts,'camZ',COLOR_CONTRACTS_DUR * 0.9).easing(InOut)
-     .delay(COLOR_CONTRACTS_START),
+     simpleTween(states.colorContracts,'camY',COLOR_CONTRACTS_DUR * 0.2).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.1),
+     simpleTween(states.colorContracts,'camZ',COLOR_CONTRACTS_DUR * 0.2).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.1),
+     simpleTween(states.colorContractsDown,'camY',COLOR_CONTRACTS_DUR * 0.4).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.3),
+     simpleTween(states.colorContractsDown,'camZ',COLOR_CONTRACTS_DUR * 0.4).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.2),
+     simpleTween(states.colorContractsBack,'camX',COLOR_CONTRACTS_DUR * 0.2).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.7),
+     simpleTween(states.colorContractsBack,'camY',COLOR_CONTRACTS_DUR * 0.2).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.7),
+     simpleTween(states.colorContractsBack,'camZ',COLOR_CONTRACTS_DUR * 0.2).easing(InOut)
+     .delay(COLOR_CONTRACTS_START + COLOR_CONTRACTS_DUR * 0.7),
 
 
      simpleTween(states.behavioralHealth, 'layout', 1000)
@@ -158,6 +170,12 @@ module.exports = function(params) {
        simpleTween(states.procurement, 'layout', 1000)
        .delay(PROCUREMENT_START),
 
+       simpleTween(states.profServices,'camX',BEHAVIORAL_HEALTH_DUR * 0.5).easing(InOut)
+       .delay(PROFESSIONAL_START),
+       simpleTween(states.profServices,'camY',BEHAVIORAL_HEALTH_DUR * 0.4).easing(InOut)
+       .delay(PROFESSIONAL_START),
+       simpleTween(states.profServices,'camZ',BEHAVIORAL_HEALTH_DUR * 0.9).easing(InOut)
+       .delay(PROFESSIONAL_START),
 
 
   //  simpleTween(states.backToDepts, 'camRotX', 8000)

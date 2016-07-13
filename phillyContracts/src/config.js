@@ -4,10 +4,10 @@ var config = {
   dotRadius: 10,
   dotValue: 5000000,
   //dotValue: 1000000,
-  showCircles:true,
-  showMetaBalls:false,
+  showCircles:false,
+  showMetaBalls:true,
   showShadows:false,
-  metaballResolution: 450,
+  metaballResolution: 100, //450,
   movie: true,
   capture: false, // setting capture to true sets movie to true below
   captureWidth: 1280,
