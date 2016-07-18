@@ -7,7 +7,7 @@ var THREE = require('three');
  * http://webglsamples.googlecode.com/hg/blob/blob.html
  */
 
-var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
+var MarchingCubes = function(resolution, material, enableUvs, enableColors, colorCanvasRez) {
 
     THREE.ImmediateRenderObject.call(this, material);
 
@@ -45,7 +45,15 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
         //this.colorField = new Int8Array(this.size3); // only for a color lookup
         this.colorLookup = [];
         this.colorObjLookup = [];
-				this.colorCanvasBalls = [];
+        this.colorCirleCanvasLookup = [];
+        this.colorCanvasBalls = [];
+
+        this.colorCircleCanvasWidth = 32;
+
+
+        //
+        var secularColorId = this.getColorId({r:0.8,g:0.8,b:0.8});
+        this.secularCircleCanvas = this.makeColorCircleCanvas(secularColorId);
 
         this.normal_cache = new Float32Array(this.size3 * 3);
 
@@ -64,10 +72,13 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
         this.hasColors = false;
         this.hasUvs = false;
 
-				this.colorCanvasRez = 2;
+        this.colorCanvasRez = colorCanvasRez || 2;
 
         this.positionArray = new Float32Array(this.maxCount * 3);
         this.normalArray = new Float32Array(this.maxCount * 3);
+
+        this.colorCanvasWidth = 2048;
+        this.colorCanvasHeight = 2048;
 
         if (this.enableUvs) {
 
@@ -77,16 +88,22 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
 
         if (this.enableColors) {
 
-            this.colorArray = new Float32Array(this.maxCount * 3);  //TODO: reove
+            this.colorArray = new Float32Array(this.maxCount * 3);
 
-						this.colorCanvas = document.createElement('canvas');
-						this.colorCanvas.width = this.size * this.colorCanvasRez;
-						this.colorCanvas.height = this.size * this.colorCanvasRez;
+            this.colorCanvas = document.createElement('canvas');
+            this.colorCanvas.width = this.colorCanvasWidth;
+            this.colorCanvas.height = this.colorCanvasHeight;
 
-						this.colorCanvasBalls = [];
+            this.colorCanvasBalls = [];
+
+            material.map = new THREE.Texture(this.colorCanvas);
+            material.specularMap = this.makeSpecularMap();
+            this.redrawSpecularMap();
 
 
-						document.getElementById('stage').appendChild(this.colorCanvas);
+
+
+          //  	document.getElementById('stage').appendChild(this.secularCanvas);
 
 
 
@@ -174,33 +191,6 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
 
 
 
-		this.redrawColorCanvas = function(){
-			var me = this;
-			var drawColorCanvasBall =  function(radius){
-				var  ctx = me.colorCanvas.getContext('2d');
-
-				return function(ball){
-					var color = me.colorObjLookup[ball.c];
-					ctx.beginPath();
-					ctx.arc(ball.x * me.colorCanvasRez, ball.y * me.colorCanvasRez, radius, 0, 2 * Math.PI, false);
-					ctx.fillStyle = 'rgb(' + ( ( color.r * 255 ) | 0 ) + ',' + ( ( color.g * 255 ) | 0 ) + ',' + ( ( color.b * 255 ) | 0 ) + ')';
-					ctx.fill();
-				};
-
-			};
-
-			if (this.enableColors){
-				this.colorCanvasBalls.forEach(drawColorCanvasBall(me.colorCanvasRez*1.1));
-				this.colorCanvasBalls.forEach(drawColorCanvasBall(me.colorCanvasRez*0.6));
-				this.colorCanvasBalls.forEach(drawColorCanvasBall(me.colorCanvasRez*0.3));
-				this.colorCanvasBalls = [];
-
-			//	ctx.endPath();
-
-
-			}
-
-		};
 
     // Returns total number of triangles. Fills triangles.
     // (this is where most of time is spent - it's inner work of O(n3) loop )
@@ -419,14 +409,14 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
 
             var d = this.count * 2;
 
-            this.uvArray[d] = pos[o1];
-            this.uvArray[d + 1] = pos[o1 + 2];
+            this.uvArray[d] = pos[o1] / 2 + 0.5;
+            this.uvArray[d + 1] = 0.5 - pos[o1 + 1] / 2;
 
-            this.uvArray[d + 2] = pos[o2];
-            this.uvArray[d + 3] = pos[o2 + 2];
+            this.uvArray[d + 2] = pos[o2] / 2 + 0.5;
+            this.uvArray[d + 3] = 0.5 - pos[o2 + 1] / 2;
 
-            this.uvArray[d + 4] = pos[o3];
-            this.uvArray[d + 5] = pos[o3 + 2];
+            this.uvArray[d + 4] = pos[o3] / 2 + 0.5;
+            this.uvArray[d + 5] = 0.5 - pos[o3 + 1] / 2;
 
         }
 
@@ -520,13 +510,121 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
 
     };
 
+    this.redrawColorCanvas = function() {
+        var me = this;
+        var drawColorCanvasBall = function(radius) {
+            var ctx = me.colorCanvas.getContext('2d');
+            var cWidth = me.colorCanvas.width;
+            var cHeight = me.colorCanvas.height;
+            var ccw = me.colorCircleCanvasWidth;
+            var ccw2 = ccw * radius;
+
+            return function(ball) {
+                //var color = me.colorObjLookup[ball.c];
+                //ctx.beginPath();
+                //ctx.arc(ball.x * cWidth, ball.y * cHeight, radius, 0, 2 * Math.PI, false);
+                //ctx.fillStyle = 'rgb(' + ( ( color.r * 255 ) | 0 ) + ',' + ( ( color.g * 255 ) | 0 ) + ',' + ( ( color.b * 255 ) | 0 ) + ')';
+                //ctx.fill();
+                var circle = me.colorCirleCanvasLookup[ball.c];
+                ctx.drawImage(circle, 0, 0, ccw, ccw, ball.x * cWidth - ccw2 / 2, ball.y * cWidth - ccw2 / 2, ccw2, ccw2);
+            };
+
+        };
+
+        if (this.enableColors) {
+            this.colorCanvasBalls.forEach(drawColorCanvasBall(1.1));
+            this.colorCanvasBalls.forEach(drawColorCanvasBall(0.6));
+            this.colorCanvasBalls.forEach(drawColorCanvasBall(0.3));
+
+
+            material.map.needsUpdate = true;
+
+
+            //	ctx.endPath();
+
+
+        }
+
+    };
+
+
+
+    this.makeSpecularMap = function() {
+        this.secularCanvas = document.createElement('canvas');
+        var canvasWidth = 512;
+        this.secularCanvas.width = canvasWidth;
+        this.secularCanvas.height = canvasWidth;
+        var ctx = this.secularCanvas.getContext('2d');
+        ctx.beginPath();
+        ctx.rect(0, 0, 2048, 2048);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+
+
+        return new THREE.Texture(this.secularCanvas);
+
+
+    };
+
+    this.redrawSpecularMap = function() {
+
+        var ctx = this.secularCanvas.getContext('2d');
+        var circle = this.secularCircleCanvas;
+        var w = this.secularCanvas.width;
+        var ccw = this.colorCircleCanvasWidth;
+        var ccw2 = ccw * 0.6;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgb(20,20,20)';
+        ctx.rect(0, 0, w, w);
+        ctx.fill();
+        var radius = this.colorCircleCanvasWidth * 0.3;
+        this.colorCanvasBalls.forEach(function(ball){
+          if(ball.r){
+            ctx.beginPath();
+            ctx.arc(ball.x * w, ball.y * w,radius , 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'rgb(' + Math.round(ball.r * 255 * 0.9) + ',' + Math.round(ball.r * 255 * 0.9) + ',' + Math.round(ball.r * 255 * 0.9) + ')';
+            //ctx.fillStyle = 'white';
+            ctx.fill();
+            //ctx.drawImage(circle, 0, 0, ccw, ccw, ball.x * w - ccw2 / 2, ball.y * w - ccw2 / 2, ccw2, ccw2);
+
+          }
+
+
+        });
+
+
+        material.specularMap.needsUpdate = true;
+
+
+    };
+
+    this.makeColorCircleCanvas = function(colorId) {
+        var canvas = document.createElement('canvas');
+        canvas.width = this.colorCircleCanvasWidth;
+        canvas.height = this.colorCircleCanvasWidth;
+        var ctx = canvas.getContext('2d');
+        var color = this.colorObjLookup[colorId];
+        ctx.beginPath();
+        ctx.arc(canvas.width * 0.5, canvas.height * 0.5, canvas.width * 0.48, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'rgb(' + ((color.r * 255) | 0) + ',' + ((color.g * 255) | 0) + ',' + ((color.b * 255) | 0) + ')';
+        ctx.fill();
+        return canvas;
+
+
+    };
+
+
+
     this.getColorId = function(color) {
         var hex = (color.r * 255) << 16 ^ (color.g * 255) << 8 ^ (color.b * 255) << 0;
         var id = this.colorLookup.indexOf(hex);
         if (id !== -1) return id;
         this.colorLookup.push(hex);
         this.colorObjLookup.push(new THREE.Color(color.r, color.g, color.b));
-        return this.colorLookup.length - 1;
+        var colorId = this.colorLookup.length - 1;
+        this.colorCirleCanvasLookup.push(this.makeColorCircleCanvas(colorId));
+        return colorId;
+
     };
 
 
@@ -540,14 +638,16 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
         return this.colorObjLookup[colorId] || new THREE.Color();
 				*/
 
-				var xi = Math.round((x / 2 + 0.5) * this.size);
-				var yi = Math.round((y / 2 + 0.5) * this.size);
+        /*var xi = Math.round((x / 2 + 0.5) * this.colorCanvas.width);
+				var yi = Math.round((y / 2 + 0.5) * this.colorCanvas.height);
 
-				var cx = Math.max(0,Math.min(this.colorCanvas.width,xi*this.colorCanvasRez));
-				var cy = Math.max(0,Math.min(this.colorCanvas.height,yi*this.colorCanvasRez));
+				var cx = Math.max(0,Math.min(this.colorCanvas.width,xi));
+				var cy = Math.max(0,Math.min(this.colorCanvas.height,yi));
 				var ctx = this.colorCanvas.getContext('2d');
-				var data = ctx.getImageData(cx,cy,1,1).data;
+				var data = [0,0,0] ; //ctx.getImageData(cx,cy,1,1).data;
 				return new THREE.Color(data[0]/255, data[1]/255, data[2]/255);
+        */
+        return new THREE.Color();
     };
 
     /////////////////////////////////////
@@ -557,7 +657,7 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
     // Adds a reciprocal ball (nice and blobby) that, to be fast, fades to zero after
     // a fixed distance, determined by strength and subtract.
 
-    this.addBall = function(ballx, bally, ballz, strength, subtract, color) {
+    this.addBall = function(ballx, bally, ballz, strength, subtract, color, reflect) {
 
         // Let's solve the equation to find the radius:
         // 1.0 / (0.000001 + radius^2) * strength - subtract = 0
@@ -580,14 +680,15 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
             xs = ballx * this.size;
 
         if (color) {
-					radius *=2;
-						colorId = this.getColorId(color);
-						this.colorCanvasBalls.push({
-							x: xs,
-							y: ys,
-							c: colorId
-						});
-				}
+            radius *= 2;
+            colorId = this.getColorId(color);
+            this.colorCanvasBalls.push({
+                x: ballx,
+                y: bally,
+                c: colorId,
+                r: reflect
+            });
+        }
 
 
 
@@ -613,8 +714,8 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
 
         for (z = min_z; z < max_z; z++) {
 
-            z_offset = this.size2 * z,
-                fz = z / this.size - ballz,
+            z_offset = this.size2 * z;
+                fz = z / this.size - ballz;
                 fz2 = fz * fz;
 
             for (y = min_y; y < max_y; y++) {
@@ -633,7 +734,7 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
                     //    val = strength * 1.6 / (0.000001 + fx * fx + fy2 + fz2) - subtract;
                     //    if (val > 0.0) this.colorField[y_offset + x] = colorId;
 
-                  //  }
+                    //  }
 
 
 
@@ -779,7 +880,9 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors) {
 
         }
 
-				this.redrawColorCanvas();
+        this.redrawColorCanvas();
+        this.redrawSpecularMap();
+        this.colorCanvasBalls = [];
 
 
     };

@@ -56,7 +56,9 @@ module.exports = function(params) {
       PROCUREMENT_START = CONTRACTS_IMPORTANT_START + CONTRACTS_IMPORTANT_DUR,
       PROCUREMENT_DUR = 14000,
       PROFESSIONAL_START = PROCUREMENT_START + PROCUREMENT_DUR,
-      PROFESSIONAL_DUR = 14000,
+      PROFESSIONAL_DUR = 7000,
+      RFP_REVEAL_START = PROFESSIONAL_START + PROFESSIONAL_DUR,
+      RFP_REVEAL_DUR = 7000,
       DUMMYVAR = 0;
 
 
@@ -145,14 +147,31 @@ module.exports = function(params) {
      simpleTween(states.behavioralHealth, 'layout', 1000)
        .delay(BEHAVIORAL_HEALTH_START),
 
-       simpleTween(states.behavioralHealth,'camX',BEHAVIORAL_HEALTH_DUR * 0.6).easing(InOut)
+
+
+       simpleTween(states.behavioralHealth,'camX',BEHAVIORAL_HEALTH_DUR * 0.5).easing(InOut)
        .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0),
-       simpleTween(states.behavioralHealth,'camY',BEHAVIORAL_HEALTH_DUR * 0.6).easing(InOut)
+       simpleTween(states.behavioralHealth,'camY',BEHAVIORAL_HEALTH_DUR * 0.5).easing(InOut)
        .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0),
-       simpleTween(states.behavioralHealth,'camZ',BEHAVIORAL_HEALTH_DUR * 0.6).easing(InOut)
+       simpleTween(states.behavioralHealth,'camZ',BEHAVIORAL_HEALTH_DUR * 0.4).easing(InOut)
        .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.1),
 
+       //zoom in to photo
 
+
+      camTween(states.behavioralHealthPhoto, PRE_SECURITY_DUR + SECURITY_DUR * 0.5)
+      .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
+      simpleTween(states.behavioralHealthPhoto, 'layout', 1000)
+      .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
+
+       simpleTween(states.behavioralHealthPhoto, 'reflect', BEHAVIORAL_HEALTH_DUR * 0.4)
+       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
+
+
+
+
+       simpleTween(states.behavioralHealth, 'reflect', CONSTRACT_NONCONTRACT_DUR * 0.5)
+       .delay(CONSTRACT_NONCONTRACT_START + CONSTRACT_NONCONTRACT_DUR * 0.5),
 
        camTween(states.contractNonContract, 2000).easing(InOut)
        .delay(CONSTRACT_NONCONTRACT_START),
@@ -169,13 +188,28 @@ module.exports = function(params) {
 
        simpleTween(states.procurement, 'layout', 1000)
        .delay(PROCUREMENT_START),
+       simpleTween(states.procurement, 'reflect', PROCUREMENT_DUR * 0.2)
+       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.5),
+       simpleTween(states.procurement, 'revealLowestPrice', PROCUREMENT_DUR * 0.18)
+       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.6)
+       .easing(InOut),
 
-       simpleTween(states.profServices,'camX',BEHAVIORAL_HEALTH_DUR * 0.5).easing(InOut)
+
+
+       simpleTween(states.profServices,'camX',PROFESSIONAL_DUR * 0.5).easing(InOut)
        .delay(PROFESSIONAL_START),
-       simpleTween(states.profServices,'camY',BEHAVIORAL_HEALTH_DUR * 0.4).easing(InOut)
+       simpleTween(states.profServices,'camY',PROFESSIONAL_DUR * 0.4).easing(InOut)
        .delay(PROFESSIONAL_START),
-       simpleTween(states.profServices,'camZ',BEHAVIORAL_HEALTH_DUR * 0.9).easing(InOut)
+       simpleTween(states.profServices,'camZ',PROFESSIONAL_DUR * 0.9).easing(InOut)
        .delay(PROFESSIONAL_START),
+       simpleTween(states.profServices, 'reflect', PROFESSIONAL_DUR * 0.1)
+       .delay(PROFESSIONAL_START),
+
+       //rfp
+       camTween(states.rfpReveal, 1200).easing(InOut)
+       .delay(RFP_REVEAL_START),
+       simpleTween(states.rfpReveal, 'revealRfp', RFP_REVEAL_DUR * 0.2)
+       .delay(RFP_REVEAL_START + 1000),
 
 
   //  simpleTween(states.backToDepts, 'camRotX', 8000)

@@ -48,6 +48,12 @@ module.exports = function(params) {
         },
         lightI: function(){
           objects.pointLight.intensity = this.val * config.lightIFactor;
+        },
+        revealLowestPrice: function(){
+          objects.revealObjects.lowestPrice.material.uniforms.revealed.value = this.val;
+        },
+        revealRfp: function(){
+          objects.revealObjects.rfp.material.uniforms.revealed.value = this.val;
         }
 
 

@@ -3,23 +3,33 @@ var MarchingCubes = require('./MarchingCubes');
 var config = require('./config');
 var model = require('./model');
 var textureCubesLoader = require('./textureCubes');
+var movieStates = require('./movieStates');
 var depts = model.depts;
+
+
 
 
 
 function build() {
 
-    var material = new THREE.MeshPhongMaterial({
+    var material = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         side: THREE.BackSide,
-        vertexColors: THREE.VertexColors,
-        envMap: textureCubesLoader.textureCubes.philly
+      //  vertexColors: THREE.VertexColors,
+        envMap: textureCubesLoader.textureCubes.philly,
+        combine: THREE.MixOperation,
+        specularMap: new THREE.Texture,
+        reflectivity: movieStates.initial.reflect,
+        //specular: new THREE.Color(255,255,1),
+        map: new THREE.Texture(),
     });
+
+    window.blobMat = material;
 
     var resolution = config.metaballResolution;
     //  var numBlobs = 10;
 
-    var effect = new MarchingCubes(resolution, material, true, true);
+    var effect = new MarchingCubes(resolution, material, true, true, config.colorCanvasRez);
 
     var scaleFix = 2000;
     var posFix = {
@@ -31,7 +41,7 @@ function build() {
     effect.position.set(-posFix.x, -posFix.y, -posFix.z);
     effect.scale.set(scaleFix / 2, scaleFix / 2, scaleFix / 2 * 0.05);
 
-    effect.enableUvs = false;
+    //effect.enableUvs = false;
 
 
     effect.update = function(nodes) {
@@ -48,7 +58,7 @@ function build() {
 
         for (i = 0; i < nodes.length; i++) {
             var node = nodes[i];
-            effect.addBall(node.x / scaleFix + posFix.x, node.y / scaleFix + posFix.y, posFix.z, strength, subtract, node.color);
+            effect.addBall(node.x / scaleFix + posFix.x, node.y / scaleFix + posFix.y, posFix.z, strength, subtract, node.color, node.reflect);
 
         }
 

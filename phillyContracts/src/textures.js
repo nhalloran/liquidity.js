@@ -1,4 +1,5 @@
 var THREE = require('three');
+var reveals = require('./reveals');
 
 //organize by category... bakdrop first?
 
@@ -7,6 +8,13 @@ var urls = {
   'PTSansNarrowRegular256': '/textures/ptsansnarrow_regular_256.png',
   'paperNormal': '/textures/609-normal-water-color-paper.jpg',
 };
+
+for (var revealId in reveals.params){
+  urls['reveal_' + revealId + '_fill'] = reveals.params[revealId].mapUrl;
+  urls['reveal_' + revealId + '_reveal'] = reveals.params[revealId].revealMapUrl;
+}
+
+
 
 
 var textureLoader = new THREE.TextureLoader();

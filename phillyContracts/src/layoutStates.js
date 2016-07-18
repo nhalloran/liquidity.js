@@ -59,7 +59,8 @@ states.wholeCity = function() {
     var foci = {
         x: 0,
         y: 0,
-        distSq: radiusSquared(model.totalBudget)
+        distSq: radiusSquared(model.totalBudget),
+        reflect:1
     };
 
     var state = {
@@ -125,7 +126,9 @@ states.deptByCat = function() {
                 x: cat.x,
                 y: yC,
                 distSq: radiusSquared(dept.t),
-                did: dept.did
+                did: dept.did,
+                reflect:0
+
 
             };
 
@@ -172,7 +175,9 @@ states.catTotals = function() {
             x: cat.x,
             y: 200 - radius(cat.t),
             distSq: radiusSquared(cat.t),
-            cid: cat.cid
+            cid: cat.cid,
+            reflect:1
+
 
         };
         state.focis.push(foci);
@@ -245,6 +250,7 @@ states.behavioralHealth.focis.forEach(function(foci, fid) {
 
 var oldFoci = extend({}, states.behavioralHealth.focis[bhFid]);
 var newBhFoci = extend({}, states.behavioralHealth.focis[bhFid]);
+//newBhFoci.reflect = 1;
 oldFoci.distSq = 100;
 oldFoci.y = oldFoci.y - 20;
 newBhFoci.y = newBhFoci.y + 100;
@@ -260,6 +266,14 @@ states.behavioralHealth.text = states.behavioralHealth.text.filter(function(txt)
 });
 states.behavioralHealth.text.push('bh_ct');
 states.behavioralHealth.text.push('bh_nct');
+
+// make bh reflective
+states.behavioralHealthPhoto = extend({}, states.behavioralHealth);
+var bhPhotoFoci = extend({},newBhFoci,{reflect:1});
+states.behavioralHealthPhoto.nodes =  states.behavioralHealthPhoto.nodes.map(function(node) {
+    if (node.fid === bhFid) return extend({}, node, { foci: bhPhotoFoci });
+    return node;
+});
 
 
 //by department, contracts colored
@@ -302,7 +316,8 @@ states.contractProcurement = function() {
     var cpFoci = {
         y: 0,
         x: 400,
-        distSq: radiusSquared(model.procurementTotal )
+        distSq: radiusSquared(model.procurementTotal ),
+        reflect:1
     };
 
     var nFoci = {

@@ -58,6 +58,8 @@ module.exports = function(params) {
             node.color.b = mix(pNode.color[2], nNode.color[2], colorT);
             if (showCircles)
                 circleGeo.setSingleColor(i, node.color);
+            //reflection
+            node.reflect = mix(pNode.foci.reflect || 0, nNode.foci.reflect || 0, colorT);
         });
 
         var pText = (layoutStates[ts.prev] || layoutStates.empty).text;

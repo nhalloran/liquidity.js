@@ -11,8 +11,12 @@ var movieUpdates = require('./movieUpdates');
 var movieTweens = require('./movieTweens');
 var movieStates = require('./movieStates');
 var backdrop = require('./backdrop');
+var reveals = require('./reveals');
 var highlights = require('./highlights');
 var getUrlVars = require('./neilviz/util/getUrlVars');
+var textures = require('./textures').textures;
+
+
 
 
 var audioEl;
@@ -193,12 +197,21 @@ function init() {
   if (showCircles)
     scene.add(circles);
 
+
+  var revealObjects = reveals.makeObjects(textures);
+  objects.revealObjects = revealObjects;
+  //window.revealObjects = revealObjects;
+  Object.keys(revealObjects).forEach(function(key){scene.add(revealObjects[key]);});
+
+
+
   if (showMetaBalls){
     metaballs = metaballs.build();
     scene.add(metaballs);
     //for debugging
     window.metaballs = metaballs;
   }
+
 
 
 
@@ -237,7 +250,7 @@ function init() {
 
   if (config.showMetaBalls && config.showShadows) {
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; //THREE.BasicShadowMap;
   }
 
   renderer.setClearColor(0xffffff, 1);

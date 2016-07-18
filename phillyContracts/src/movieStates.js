@@ -13,10 +13,12 @@ var statesArray = [{
         camY: 0,
         camZ: 100,
         camRotX: 0,
-        reflect: 1,
+        reflect: 0.7,
         lightI: 1,
         highlightPoverty: 0,
-        highlightEpsilon: 1
+        highlightEpsilon: 1,
+        revealLowestPrice:0,
+        revealRfp: 0,
     },
     {
         id: 'initialPullback',
@@ -94,11 +96,23 @@ var statesArray = [{
 
 
     }, {
+    }, {
+        id: 'behavioralHealthPhoto',
+        camX: -250,
+        camY: 220,
+        camZ: 200,
+        layout: 7,
+        reflect:1,
+
+
+    }, {
         id: 'contractNonContract',
         camX: 0,
         camY: -20,
         camZ: 450,
-        layout: 7,
+        layout: 8,
+        reflect: 0.1
+
 
 
     }, {
@@ -109,14 +123,22 @@ var statesArray = [{
         id: 'procurement',
         camZ: 300,
         camX: 270,
-        layout: 8,
+        layout: 9,
+        reflect: 0.8,
+        revealLowestPrice:1
+
 
     }, {
         id: 'profServices',
         camZ: 180,
         camX: 200,
+        reflect: 0.1
+  }, {
+      id: 'rfpReveal',
+      camY: -260,
+      revealRfp:1
 
-    }
+  }
 ];
 
 
