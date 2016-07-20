@@ -200,7 +200,7 @@ function init() {
 
   var revealObjects = reveals.makeObjects(textures);
   objects.revealObjects = revealObjects;
-  //window.revealObjects = revealObjects;
+  window.revealObjects = revealObjects;
   Object.keys(revealObjects).forEach(function(key){scene.add(revealObjects[key]);});
 
 

@@ -5,19 +5,30 @@ var deepExtend = require('./util/deepExtend');
 
 var RevealMap = function(params) {
 
+    var uniforms = (params.map) ?
+        deepExtend({}, RevealMapShader.uniformsWithMap) :
+        deepExtend({}, RevealMapShader.uniforms);
+
+    var defines = {};
+
+    if (params.color) {
+      uniforms.color = {value: new THREE.Color(params.color)};
+      defines.COLOR = true;
+    }
+
+
 
     var material = new THREE.ShaderMaterial({
-
-        uniforms: (params.map) ?
-            deepExtend({}, RevealMapShader.uniformsWithMap) :
-            deepExtend({}, RevealMapShader.uniforms),
+        uniforms: uniforms,
+        defines: defines,
         vertexShader: RevealMapShader.vertexShader,
         fragmentShader: (params.map) ?
             RevealMapShader.fragmentShaderWithMap :
             RevealMapShader.fragmentShader,
         depthTest: false,
-        transparent: true
+        transparent: true,
     });
+
 
     material.uniforms.revealMap.value = params.revealMap;
     if (params.map) material.uniforms.map.value = params.map;
@@ -46,46 +57,36 @@ var RevealMapShader = {
 
 
         "revealMap": {
-            type: "t",
             value: null
         },
         "epsilon": {
-            type: "f",
             value: 0.03
         },
         "revealed": {
-            type: "f",
             value: 1
         },
         "opacity": {
-            type: "f",
             value: 1
         }
-
     },
 
     uniformsWithMap: {
 
         "map": {
-            type: "t",
             value: null
         },
         "revealMap": {
-            type: "t",
             value: null
         },
         "epsilon": {
-            type: "f",
             value: 0.03
         },
         "revealed": {
-            type: "f",
             value: 1
         },
         "opacity": {
-            type: "f",
             value: 1
-        }
+        },
 
     },
 
@@ -129,11 +130,13 @@ var RevealMapShader = {
 
     fragmentShaderWithMap: [
 
+
         "uniform sampler2D map;",
         "uniform sampler2D revealMap;",
         "uniform float epsilon;",
         "uniform float revealed;",
         "uniform float opacity;",
+        "uniform vec3 color;",
 
         "varying vec2 vUv;",
 
@@ -141,6 +144,11 @@ var RevealMapShader = {
         "void main() {",
 
         "vec4 rgba = texture2D(map,  vUv);",
+        "#ifdef COLOR",
+        "rgba = rgba * vec4(color,1.0);",
+        "#endif",
+
+
         "vec4 reveal = texture2D(revealMap,  vUv);",
         "rgba.a *=  opacity * smoothstep(1.0 - revealed - epsilon, 1.0 - revealed + epsilon, (reveal.r + reveal.g + reveal.b)/3.0);",
 

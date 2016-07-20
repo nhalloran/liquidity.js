@@ -9,19 +9,20 @@ var filenames = ["xpos.png", "xneg.png",
   "zpos.png", "zneg.png"
 ];
 */
+
+var texture6 = function(filename){
+  var arr = [];
+  for (var i = 0 ; i <6; i++){
+    arr.push('/textures/' + filename);
+  }
+  return arr;
+};
 var filenames = ["philly_singleSquare.jpg","philly_singleSquare.jpg","philly_singleSquare.jpg","philly_singleSquare.jpg","philly_singleSquare.jpg","philly_singleSquare.jpg",];
 
 var urlSets = {
-  philly: filenames.map(function(img) {
-    return '/textures/'+ img;
-  }),
-/*  dark: filenames.map(function(img) {
-    return '/textures/dark_skybox/' + img;
-  }),
-  redblue: filenames.map(function(img) {
-    return '/textures/redblue_skybox/' + img;
-  })
-*/
+  philly: texture6("philly_singleSquare.jpg"),
+  nurseBloodPressure: texture6("photo_nurseBloodPressure.jpg"),
+
 };
 
 var textureCubes = {};

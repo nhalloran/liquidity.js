@@ -14,11 +14,20 @@ var statesArray = [{
         camZ: 100,
         camRotX: 0,
         reflect: 0.7,
+        reflectPhoto:0,
         lightI: 1,
         highlightPoverty: 0,
         highlightEpsilon: 1,
+        revealPCircles: 0,
+        revealSCircles: 0,
         revealLowestPrice:0,
         revealRfp: 0,
+        revealBidders:0,
+        revealWinner: 0,
+        revealBulbs: 0,
+        revealCurses: 0,
+        revealDothis:0
+
     },
     {
         id: 'initialPullback',
@@ -52,19 +61,22 @@ var statesArray = [{
         camZ: 400,
         lightI: 0.7,
         highlightPoverty: 1,
-        highlightEpsilon: 0.2
+        highlightEpsilon: 0.2,
+        revealPCircles: 1
 
     }, {
         id: 'preSecurity',
         lightI: 1,
         highlightPoverty: 0,
+        revealPCircles: 2,
         highlightEpsilon: 1
     }, {
         id: 'securityExamples',
         camX: -180,
-        camZ: 450,
-        camY: -10,
+        camZ: 470,
+        camY: -15,
         lightI: 0.7,
+        revealSCircles: 1,
         highlightSecurity: 1,
         highlightEpsilon: 0.2
 
@@ -75,6 +87,7 @@ var statesArray = [{
         camZ: 450,
         layout: 5,
         lightI: 1,
+        revealSCircles: 2,
         highlightSecurity: 0,
 
     }, {
@@ -98,6 +111,7 @@ var statesArray = [{
     }, {
     }, {
         id: 'behavioralHealthPhoto',
+        reflectPhoto:1,
         camX: -250,
         camY: 220,
         camZ: 200,
@@ -137,7 +151,29 @@ var statesArray = [{
       id: 'rfpReveal',
       camY: -260,
       revealRfp:1
-
+  }, {
+      id: 'rfpBidders',
+      camX: 200,
+      camY: -340,
+      camZ: 270,
+      revealBidders:1,
+      revealWinner:1
+  }, {
+      id: 'bulbs',
+      revealWinner:2,
+      revealBulbs:1,
+  }, {
+      id: 'curses',
+      revealCurses: 1,
+      revealBulbs:2,
+  }, {
+      id: 'prescriptive',
+      camX: 170,
+      camY: -260,
+      camZ: 130,
+      revealCurses: 2,
+      revealRfp:0.4,
+      revealDothis:1
   }
 ];
 

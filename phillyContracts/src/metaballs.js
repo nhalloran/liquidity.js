@@ -3,6 +3,7 @@ var MarchingCubes = require('./MarchingCubes');
 var config = require('./config');
 var model = require('./model');
 var textureCubesLoader = require('./textureCubes');
+var moviePhotoOrder = require('./moviePhotoOrder');
 var movieStates = require('./movieStates');
 var depts = model.depts;
 
@@ -18,7 +19,7 @@ function build() {
       //  vertexColors: THREE.VertexColors,
         envMap: textureCubesLoader.textureCubes.philly,
         combine: THREE.MixOperation,
-        specularMap: new THREE.Texture,
+        specularMap: new THREE.Texture(),
         reflectivity: movieStates.initial.reflect,
         //specular: new THREE.Color(255,255,1),
         map: new THREE.Texture(),
@@ -70,6 +71,14 @@ function build() {
     //    effect.receiveShadow = true;
     }
 
+    effect.setPhoto = function(id){
+      var photo = moviePhotoOrder[id];
+      material.envMap = textureCubesLoader.textureCubes[photo];
+      //material.envMap
+
+    };
+
+
 
     return effect;
 
@@ -77,7 +86,9 @@ function build() {
 
 
 
+
+
 module.exports = {
     build: build,
-    update: function(){}
+    update: function(){},
 };

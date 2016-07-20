@@ -11,6 +11,8 @@ var states = require('./movieStates');
 module.exports = function(params) {
 
   var InOut = TWEEN.Easing.Quadratic.InOut;
+  var In = TWEEN.Easing.Quadratic.In;
+  var Out = TWEEN.Easing.Quadratic.Out;
 
 
 
@@ -56,9 +58,16 @@ module.exports = function(params) {
       PROCUREMENT_START = CONTRACTS_IMPORTANT_START + CONTRACTS_IMPORTANT_DUR,
       PROCUREMENT_DUR = 14000,
       PROFESSIONAL_START = PROCUREMENT_START + PROCUREMENT_DUR,
-      PROFESSIONAL_DUR = 7000,
+      PROFESSIONAL_DUR = 11000,
       RFP_REVEAL_START = PROFESSIONAL_START + PROFESSIONAL_DUR,
-      RFP_REVEAL_DUR = 7000,
+      RFP_REVEAL_DUR = 12000,
+      BULBS_START = RFP_REVEAL_START + RFP_REVEAL_DUR,
+      BULBS_DUR = 8000,
+      CURSES_START = BULBS_START + BULBS_DUR,
+      CURSES_DUR = 8000,
+      PRESCRIPT_START = CURSES_START + CURSES_DUR,
+      PRESCRIPT_DUR = 8000,
+
       DUMMYVAR = 0;
 
 
@@ -93,31 +102,44 @@ module.exports = function(params) {
 
       camTween(states.povertyExamples, POVERTY_DUR * 0.9)
         .delay(POVERTY_START).easing(InOut),
-      simpleTween(states.povertyExamples, 'lightI', 2000)
-        .delay(POVERTY_START + POVERTY_DUR * 0.1),
-      simpleTween(states.povertyExamples, 'highlightPoverty', 2000)
-      .delay(POVERTY_START + POVERTY_DUR * 0.1),
-      simpleTween(states.povertyExamples, 'highlightEpsilon', 4000)
-      .delay(POVERTY_START + POVERTY_DUR * 0.1),
+    //  simpleTween(states.povertyExamples, 'lightI', 2000)
+    //    .delay(POVERTY_START + POVERTY_DUR * 0.1),
+    //  simpleTween(states.povertyExamples, 'highlightPoverty', 2000)
+    //  .delay(POVERTY_START + POVERTY_DUR * 0.1),
+    //  simpleTween(states.povertyExamples, 'highlightEpsilon', 4000)
+    //  .delay(POVERTY_START + POVERTY_DUR * 0.1),
+      simpleTween(states.povertyExamples, 'revealPCircles', POVERTY_DUR * 0.2)
+      .delay(POVERTY_START + POVERTY_DUR * 0.3),
 
 
-      camTween(states.securityExamples, PRE_SECURITY_DUR + SECURITY_DUR * 0.9)
-      .delay(POVERTY_START + POVERTY_DUR).easing(InOut),
 
-      simpleTween(states.preSecurity, 'lightI', PRE_SECURITY_DUR)
-        .delay(POVERTY_START + POVERTY_DUR),
-      simpleTween(states.preSecurity, 'highlightPoverty', PRE_SECURITY_DUR )
-      .delay(POVERTY_START + POVERTY_DUR),
-      simpleTween(states.preSecurity, 'highlightEpsilon', PRE_SECURITY_DUR)
-      .delay(POVERTY_START + POVERTY_DUR),
 
-      simpleTween(states.securityExamples, 'lightI', 800)
+      simpleTween(states.preSecurity, 'revealPCircles', 400)
+       .delay(POVERTY_START + POVERTY_DUR),
+
+
+       camTween(states.securityExamples, PRE_SECURITY_DUR + SECURITY_DUR * 0.35)
+       .delay(POVERTY_START + POVERTY_DUR).easing(InOut),
+
+    //  simpleTween(states.preSecurity, 'lightI', PRE_SECURITY_DUR)
+    //    .delay(POVERTY_START + POVERTY_DUR),
+    //  simpleTween(states.preSecurity, 'highlightPoverty', PRE_SECURITY_DUR )
+    //  .delay(POVERTY_START + POVERTY_DUR),
+    //  simpleTween(states.preSecurity, 'highlightEpsilon', PRE_SECURITY_DUR)
+    //  .delay(POVERTY_START + POVERTY_DUR),
+
+      simpleTween(states.securityExamples, 'revealSCircles', SECURITY_DUR * 0.2)
       .delay(SECURITY_START + SECURITY_DUR * 0.1),
-      simpleTween(states.securityExamples, 'highlightSecurity', 800)
-      .delay(SECURITY_START + SECURITY_DUR * 0.1),
-      simpleTween(states.securityExamples, 'highlightEpsilon', 1500)
-      .delay(SECURITY_START + SECURITY_DUR * 0.1),
 
+    //  simpleTween(states.securityExamples, 'lightI', 800)
+    //  .delay(SECURITY_START + SECURITY_DUR * 0.1),
+    //  simpleTween(states.securityExamples, 'highlightSecurity', 800)
+    //  .delay(SECURITY_START + SECURITY_DUR * 0.1),
+    //  simpleTween(states.securityExamples, 'highlightEpsilon', 1500)
+    //  .delay(SECURITY_START + SECURITY_DUR * 0.1),
+
+    simpleTween(states.colorContracts, 'revealSCircles', SECURITY_DUR * 0.1)
+    .delay(SECURITY_START + SECURITY_DUR * 0.8),
 
       simpleTween(states.colorContracts, 'lightI', 400)
       .delay(COLOR_CONTRACTS_START),
@@ -164,6 +186,8 @@ module.exports = function(params) {
       simpleTween(states.behavioralHealthPhoto, 'layout', 1000)
       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
 
+       simpleTween(states.behavioralHealthPhoto, 'reflectPhoto', 0)
+       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
        simpleTween(states.behavioralHealthPhoto, 'reflect', BEHAVIORAL_HEALTH_DUR * 0.4)
        .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
 
@@ -208,8 +232,45 @@ module.exports = function(params) {
        //rfp
        camTween(states.rfpReveal, 1200).easing(InOut)
        .delay(RFP_REVEAL_START),
-       simpleTween(states.rfpReveal, 'revealRfp', RFP_REVEAL_DUR * 0.2)
+       simpleTween(states.rfpReveal, 'revealRfp', RFP_REVEAL_DUR * 0.15)
        .delay(RFP_REVEAL_START + 1000),
+
+       //rfp
+       camTween(states.rfpBidders, 1200).easing(InOut)
+       .delay(RFP_REVEAL_START + RFP_REVEAL_DUR * 0.26),
+       simpleTween(states.rfpBidders, 'revealBidders', RFP_REVEAL_DUR * 0.2)
+       .delay(RFP_REVEAL_START + RFP_REVEAL_DUR * 0.29),
+       simpleTween(states.rfpBidders, 'revealWinner', RFP_REVEAL_DUR * 0.05)
+       .delay(RFP_REVEAL_START + RFP_REVEAL_DUR * 0.51).easing(In),
+
+       simpleTween(states.bulbs, 'revealWinner', RFP_REVEAL_DUR * 0.1)
+       .delay(RFP_REVEAL_START + RFP_REVEAL_DUR * 0.75).easing(In),
+
+       //light bulbs
+
+
+       simpleTween(states.bulbs, 'revealBulbs', BULBS_DUR * 0.5)
+       .delay(BULBS_START + BULBS_DUR * 0.1),
+       //curses
+
+       simpleTween(states.curses, 'revealBulbs', CURSES_DUR * 0.05)
+       .delay(CURSES_START),
+       simpleTween(states.curses, 'revealCurses', CURSES_DUR * 0.2)
+       .delay(CURSES_START + CURSES_DUR * 0.2),
+
+       //prescriptive
+
+       camTween(states.prescriptive, PRESCRIPT_DUR * 0.6).easing(InOut)
+       .delay(PRESCRIPT_START),
+       simpleTween(states.prescriptive, 'revealCurses',400)
+       .delay(PRESCRIPT_START),
+       simpleTween(states.prescriptive, 'revealRfp',PRESCRIPT_DUR * 0.1)
+       .delay(PRESCRIPT_START + PRESCRIPT_DUR * 0.3),
+
+       simpleTween(states.prescriptive, 'revealDothis',PRESCRIPT_DUR * 0.1)
+       .delay(PRESCRIPT_START + PRESCRIPT_DUR * 0.47),
+
+
 
 
   //  simpleTween(states.backToDepts, 'camRotX', 8000)
