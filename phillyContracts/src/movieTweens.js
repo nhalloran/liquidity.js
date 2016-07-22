@@ -19,7 +19,7 @@ module.exports = function(params) {
 
   var updates = params.movieUpdates;
 
-  var simpleTween = function(endState, key, duration){
+  var simpleTween = function(endState, key, duration, override){
     startState = states[endState.prevId];
     return new TWEEN.Tween({val:startState[key]})
     .to({val:endState[key]},duration)
@@ -67,6 +67,8 @@ module.exports = function(params) {
       CURSES_DUR = 8000,
       PRESCRIPT_START = CURSES_START + CURSES_DUR,
       PRESCRIPT_DUR = 8000,
+      RESOURSES_START = PRESCRIPT_START + PRESCRIPT_DUR,
+      RESOURSES_DUR = 8000,
 
       DUMMYVAR = 0;
 
@@ -141,10 +143,10 @@ module.exports = function(params) {
     simpleTween(states.colorContracts, 'revealSCircles', SECURITY_DUR * 0.1)
     .delay(SECURITY_START + SECURITY_DUR * 0.8),
 
-      simpleTween(states.colorContracts, 'lightI', 400)
-      .delay(COLOR_CONTRACTS_START),
-      simpleTween(states.colorContracts, 'highlightSecurity', 400)
-      .delay(COLOR_CONTRACTS_START),
+    //  simpleTween(states.colorContracts, 'lightI', 400)
+    //  .delay(COLOR_CONTRACTS_START),
+    //  simpleTween(states.colorContracts, 'highlightSecurity', 400)
+    //  .delay(COLOR_CONTRACTS_START),
 
       simpleTween(states.colorContracts, 'layout', COLOR_CONTRACTS_DUR * 0.1)
         .delay(COLOR_CONTRACTS_START),
@@ -186,7 +188,10 @@ module.exports = function(params) {
       simpleTween(states.behavioralHealthPhoto, 'layout', 1000)
       .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
 
-       simpleTween(states.behavioralHealthPhoto, 'reflectPhoto', 0)
+      //fade to zero reflection fure photo flip
+      simpleTween(states.behavioralHealth, 'reflect',400)
+      .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5 - 400),
+      simpleTween(states.behavioralHealthPhoto, 'reflectPhoto', 0)
        .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
        simpleTween(states.behavioralHealthPhoto, 'reflect', BEHAVIORAL_HEALTH_DUR * 0.4)
        .delay(BEHAVIORAL_HEALTH_START + BEHAVIORAL_HEALTH_DUR * 0.5),
@@ -194,12 +199,16 @@ module.exports = function(params) {
 
 
 
-       simpleTween(states.behavioralHealth, 'reflect', CONSTRACT_NONCONTRACT_DUR * 0.5)
-       .delay(CONSTRACT_NONCONTRACT_START + CONSTRACT_NONCONTRACT_DUR * 0.5),
+       simpleTween(states.contractNonContract, 'reflect', CONSTRACT_NONCONTRACT_DUR)
+       .delay(CONSTRACT_NONCONTRACT_START),
 
        camTween(states.contractNonContract, 2000).easing(InOut)
        .delay(CONSTRACT_NONCONTRACT_START),
 
+       simpleTween(states.contractsImportant, 'reflectPhoto', 0)
+       .delay(CONTRACTS_IMPORTANT_START),
+       simpleTween(states.contractsImportant, 'reflect', CONTRACTS_IMPORTANT_DUR * 0.4)
+       .delay(CONTRACTS_IMPORTANT_START),
        camTween(states.contractsImportant, CONTRACTS_IMPORTANT_DUR * 0.7).easing(InOut)
        .delay(CONTRACTS_IMPORTANT_START),
 
@@ -212,10 +221,19 @@ module.exports = function(params) {
 
        simpleTween(states.procurement, 'layout', 1000)
        .delay(PROCUREMENT_START),
-       simpleTween(states.procurement, 'reflect', PROCUREMENT_DUR * 0.2)
-       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.5),
-       simpleTween(states.procurement, 'revealLowestPrice', PROCUREMENT_DUR * 0.18)
-       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.6)
+       simpleTween(states.procurement, 'reflect', 290)
+       .delay(PROCUREMENT_START - 300),
+       //rfp
+       camTween(states.procurementPhoto, PROCUREMENT_DUR * 0.5 - 2500).easing(InOut)
+       .delay(PROCUREMENT_START + 2500),
+       simpleTween(states.procurementPhoto, 'reflectPhoto', 0)
+       .delay(PROCUREMENT_START),
+       simpleTween(states.procurementPhoto, 'reflect', PROCUREMENT_DUR * 0.2)
+       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.1),
+       camTween(states.procurementDrawing, PROCUREMENT_DUR * 0.05).easing(InOut)
+       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.6),
+       simpleTween(states.procurementDrawing, 'revealLowestPrice', PROCUREMENT_DUR * 0.18)
+       .delay(PROCUREMENT_START + PROCUREMENT_DUR * 0.65)
        .easing(InOut),
 
 
@@ -270,6 +288,16 @@ module.exports = function(params) {
        simpleTween(states.prescriptive, 'revealDothis',PRESCRIPT_DUR * 0.1)
        .delay(PRESCRIPT_START + PRESCRIPT_DUR * 0.47),
 
+       // Resources & network
+       camTween(states.resources, RESOURSES_DUR * 0.2).easing(InOut)
+       .delay(RESOURSES_START),
+
+       simpleTween(states.resources, 'revealResourcesNetwork',RESOURSES_DUR * 0.6)
+       .delay(RESOURSES_START + RESOURSES_DUR * 0.2),
+
+       // Resources & network
+       camTween(states.network, RESOURSES_DUR * 0.2).easing(InOut)
+       .delay(RESOURSES_START + RESOURSES_DUR * 0.4),
 
 
 

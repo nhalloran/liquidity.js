@@ -346,7 +346,7 @@ states.contractProcurement = function() {
     var state = {
         focis: [cFoci,cpFoci,nFoci],
         nodes: nodes ,
-        text: ['proc_t_0','proc_n_0', 'proc_s_0','proc_t_1','proc_n_1', 'proc_s_1','proc_t_2','proc_n_2'],
+        text: [] //['proc_t_0','proc_n_0', 'proc_s_0','proc_t_1','proc_n_1', 'proc_s_1','proc_t_2','proc_n_2'],
     };
 
     return state;

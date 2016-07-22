@@ -11,6 +11,23 @@ module.exports = function(params) {
 
     var pCircles = ([1,2,3,4]).map(function(n){return objects.revealObjects['circleP' + n];});
     var sCircles = ([1,2,3,4,5,6]).map(function(n){return objects.revealObjects['circleS' + n];});
+    function updateReveal(id,val){
+      objects.revealObjects[id].material.uniforms.revealed.value = Math.min(1,val);
+      objects.revealObjects[id].material.uniforms.opacity.value = Math.min(1,2-val);
+      objects.revealObjects[id].visible = (val > 0) && (val < 2);
+    }
+    function updateRevealGen(id){
+      //faster version of above
+      var obj = objects.revealObjects[id];
+      var objR = obj.material.uniforms.revealed;
+      var objO = obj.material.uniforms.opacity;
+      return function(){
+        objR.value = Math.min(1,this.val);
+        objO.value = Math.min(1,2-this.val);
+        obj.visible = (this.val > 0) && (this.val < 2);
+      };
+
+    }
 
     var updates = {
         camX: function() {
@@ -72,30 +89,17 @@ module.exports = function(params) {
             circle.material.uniforms.opacity.value = Math.min(1,2-val);
           });
         },
-        revealLowestPrice: function(){
-          objects.revealObjects.lowestPrice.material.uniforms.revealed.value = this.val;
-        },
-        revealRfp: function(){
-          objects.revealObjects.rfp.material.uniforms.revealed.value = this.val;
-        },
-        revealBidders: function(){
-          objects.revealObjects.bidders.material.uniforms.revealed.value = this.val;
-        },
-        revealWinner: function(){
-          objects.revealObjects.winnerCircle.material.uniforms.revealed.value = Math.min(1,this.val);
-          objects.revealObjects.winnerCircle.material.uniforms.opacity.value = Math.min(1,2-this.val);
-        },
-        revealBulbs: function(){
-          objects.revealObjects.bulbs.material.uniforms.revealed.value = Math.min(1,this.val);
-          objects.revealObjects.bulbs.material.uniforms.opacity.value = Math.min(1,2-this.val);
-        },
-        revealCurses: function(){
-          objects.revealObjects.curses.material.uniforms.revealed.value = Math.min(1,this.val);
-          objects.revealObjects.curses.material.uniforms.opacity.value = Math.min(1,2-this.val);
-        },
-        revealDothis: function(){
-          objects.revealObjects.dothis.material.uniforms.revealed.value = Math.min(1,this.val);
-          objects.revealObjects.dothis.material.uniforms.opacity.value = Math.min(1,2-this.val);
+        revealLowestPrice: updateRevealGen('lowestPrice'),
+        revealRfp: updateRevealGen('rfp'),
+        revealBidders: updateRevealGen('bidders'),
+        revealWinner: updateRevealGen('winnerCircle'),
+        revealBulbs: updateRevealGen('bulbs'),
+        revealCurses: updateRevealGen('curses'),
+        revealDothis: updateRevealGen('dothis'),
+        revealResourcesNetwork: function(){
+          updateReveal('moneyArms',Math.min(1,Math.max(0,this.val*4)));
+          updateReveal('moneyBills',Math.min(1,Math.max(0,this.val*4 -0.1)));
+          updateReveal('network',Math.min(1,Math.max(0,this.val*4 -2)));
         }
 
 

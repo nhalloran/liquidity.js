@@ -4,14 +4,15 @@ var layoutStates = require('./layoutStates');
 var model = require('./model');
 
 var circPScale = 0.245;
+var resourceNetworkScale = 0.1;
 
 
 var params = {
     lowestPrice: {
-        x: 530,
-        y: -20,
-        width: 120, //2800X3155
-        height: 120,
+        x: 404,
+        y: -125,
+        width: 119, //2800X3155
+        height: 119,
         mapUrl: '/textures/drawing-lowestPrice-fill-512.png',
         revealMapUrl: '/textures/drawing-lowestPrice-reveal-512.png',
     },
@@ -62,6 +63,30 @@ var params = {
         height: 923 * 0.07,
         mapUrl: '/textures/drawing-dothis-fill.png',
         revealMapUrl: '/textures/drawing-dothis-reveal.png',
+    },
+    moneyArms: {
+        x: 147,
+        y: -440,
+        width: 2455 * resourceNetworkScale * 1.05, //2800X3155
+        height: 681 * resourceNetworkScale * 1.05,
+        mapUrl: '/textures/drawing-money-arms-fill.png',
+        revealMapUrl: '/textures/drawing-money-arms-reveal.png',
+    },
+    moneyBills: {
+        x: 130,
+        y: -431,
+        width: 2265 * resourceNetworkScale, //2800X3155
+        height: 534 * resourceNetworkScale,
+        mapUrl: '/textures/drawing-money-bills-fill.png',
+        revealMapUrl: '/textures/drawing-money-bills-reveal.png',
+    },
+    network: {
+        x: 384,
+        y: -440,
+        width: 1596 * resourceNetworkScale * 1.05, //2800X3155
+        height: 928 * resourceNetworkScale * 1.05,
+        mapUrl: '/textures/drawing-network-fill.png',
+        revealMapUrl: '/textures/drawing-network-reveal.png',
     },
     circleP1: {
         x: 0,

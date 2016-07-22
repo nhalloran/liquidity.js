@@ -22,6 +22,7 @@ var filenames = ["philly_singleSquare.jpg","philly_singleSquare.jpg","philly_sin
 var urlSets = {
   philly: texture6("philly_singleSquare.jpg"),
   nurseBloodPressure: texture6("photo_nurseBloodPressure.jpg"),
+  procurementItems: texture6("photo-paper-sandwiches.jpg"),
 
 };
 

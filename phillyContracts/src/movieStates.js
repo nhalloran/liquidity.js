@@ -26,7 +26,8 @@ var statesArray = [{
         revealWinner: 0,
         revealBulbs: 0,
         revealCurses: 0,
-        revealDothis:0
+        revealDothis:0,
+        revealResourcesNetwork:0
 
     },
     {
@@ -106,17 +107,19 @@ var statesArray = [{
         camY: 200,
         camZ: 240,
         layout: 6,
+        reflect:0,
+
 
 
     }, {
     }, {
         id: 'behavioralHealthPhoto',
         reflectPhoto:1,
-        camX: -250,
-        camY: 220,
-        camZ: 200,
+        camX: -240,
+        camY: 240,
+        camZ: 120,
         layout: 7,
-        reflect:1,
+        reflect:0.8,
 
 
     }, {
@@ -125,28 +128,47 @@ var statesArray = [{
         camY: -20,
         camZ: 450,
         layout: 8,
-        reflect: 0.1
+        reflect: 0
 
 
 
     }, {
         id: 'contractsImportant',
         camZ: 370,
+        reflectPhoto:2,
+        reflect: 0.2,
 
     }, {
         id: 'procurement',
         camZ: 300,
         camX: 270,
         layout: 9,
-        reflect: 0.8,
-        revealLowestPrice:1
+        reflect: 0,
+
+
+      }, {
+          id: 'procurementPhoto',
+          camX: 380,
+          camZ: 118,
+          camY: 0,
+          reflect: 0.8,
+          reflectPhoto:3,
+      }, {
+          id: 'procurementDrawing',
+          camX: 380,
+          camY: -70,
+          camZ: 170,
+          revealLowestPrice:1,
+
+
 
 
     }, {
         id: 'profServices',
         camZ: 180,
         camX: 200,
-        reflect: 0.1
+        camY: -20,
+        reflect: 0
   }, {
       id: 'rfpReveal',
       camY: -260,
@@ -174,7 +196,18 @@ var statesArray = [{
       revealCurses: 2,
       revealRfp:0.4,
       revealDothis:1
-  }
+  }, {
+      id: 'resources',
+      camX: 200,
+      camY: -400,
+      camZ: 190,
+      revealResourcesNetwork:1
+  }, {
+      id: 'network',
+      camX: 240,
+      camY: -360,
+      camZ: 240,
+  },
 ];
 
 

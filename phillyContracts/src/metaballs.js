@@ -91,4 +91,5 @@ function build() {
 module.exports = {
     build: build,
     update: function(){},
+    setPhoto: function(){},
 };
