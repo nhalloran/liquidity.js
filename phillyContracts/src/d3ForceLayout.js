@@ -51,12 +51,13 @@ var d3ForceLayout = function() {
 
   force.tick = function() {
     // simulated annealing, basically
+    /*
     //if ((alpha = 0.99) < 0.005) {
-    if ((alpha = 0.05) < 0.005) {
-      timer = null;
-      event.end({type: "end", alpha: alpha = 0});
-      return true;
-    }
+    //  timer = null;
+    //  event.end({type: "end", alpha: alpha = 0});
+    //  return true;
+    //}
+    */
 
     var n = nodes.length,
         m = links.length,
@@ -188,6 +189,8 @@ var d3ForceLayout = function() {
   };
 
   force.alpha = function(x) {
+      alpha = x;
+    /*
     if (!arguments.length) return alpha;
 
     x = +x;
@@ -203,6 +206,7 @@ var d3ForceLayout = function() {
       // disable timer
       //timer = d3_timer(force.tick);
     }
+    */
 
     return force;
   };
