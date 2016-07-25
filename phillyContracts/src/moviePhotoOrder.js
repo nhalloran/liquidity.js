@@ -2,5 +2,6 @@ module.exports = [
   'philly',
   'nurseBloodPressure',
   'philly',
-  'procurementItems'
+  'procurementItems',
+  'constructionPlan'
 ];

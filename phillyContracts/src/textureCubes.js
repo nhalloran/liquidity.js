@@ -23,6 +23,7 @@ var urlSets = {
   philly: texture6("philly_singleSquare.jpg"),
   nurseBloodPressure: texture6("photo_nurseBloodPressure.jpg"),
   procurementItems: texture6("photo-paper-sandwiches.jpg"),
+  constructionPlan: texture6("photo-construction-plan.jpg"),
 
 };
 

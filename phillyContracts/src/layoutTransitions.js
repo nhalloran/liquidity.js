@@ -1,20 +1,18 @@
 var TWEEN = require('tween.js');
-var layoutStates = require('./layoutStates');
-var movieLayoutOrder = require('./movieLayoutOrder');
+
 var mix = require('./neilviz/util/mix');
 
-var transitions = null;
-
 module.exports = function(params) {
-    if (transitions !== null) return transitions;
 
     var textObjects = params.textObjects;
     var showCircles = params.showCircles;
     var nodes = params.nodes;
-    var circleGeo = params.circleGeo;
     var camera = params.camera;
     var clock = params.clock;
-    var force = params.force;
+    var layoutStates = params.layoutStates;
+    var movieLayoutOrder = params.movieLayoutOrder;
+
+    var dots = params.dots;
 
 
     var currentState = 0;
@@ -57,9 +55,10 @@ module.exports = function(params) {
             node.color.g = mix(pNode.color[1], nNode.color[1], colorT);
             node.color.b = mix(pNode.color[2], nNode.color[2], colorT);
             if (showCircles)
-                circleGeo.setSingleColor(i, node.color);
+                dots.geometry.setSingleColor(i, node.color);
             //reflection
             node.reflect = mix(pNode.foci.reflect || 0, nNode.foci.reflect || 0, colorT);
+            node.yy = mix(pNode.yy || 0, nNode.yy || 0, colorT);
         });
 
         var pText = (layoutStates[ts.prev] || layoutStates.empty).text;
@@ -105,7 +104,7 @@ module.exports = function(params) {
             node.color.g = mix(pNode.color[1], nNode.color[1], colorT);
             node.color.b = mix(pNode.color[2], nNode.color[2], colorT);
             if (showCircles)
-                circleGeo.setSingleColor(i, node.color);
+                dots.geometry.setSingleColor(i, node.color);
         });
     }
 
@@ -130,7 +129,7 @@ module.exports = function(params) {
     function gotoMovieState(seqId) {
       var p = Math.floor(seqId);
       var n = Math.ceil(seqId);
-      if (transState.next !== movieLayoutOrder[n]) force.start();
+      if (transState.next !== movieLayoutOrder[n]) dots.force.start();
       transState.prev = movieLayoutOrder[p];
       transState.next = movieLayoutOrder[n];
       transState.t = seqId - p;
@@ -160,7 +159,7 @@ module.exports = function(params) {
         transTween = new TWEEN.Tween(sState)
             .onUpdate(layoutUpdateWithCamera)
             .to({t: 1}, 1200)
-            .onStart(force.start)
+            .onStart(dots.force.start)
             .start(startTime);
 
         var pText = (layoutStates[prev] || layoutStates.empty).text;
@@ -197,12 +196,11 @@ module.exports = function(params) {
         animateToState(stateIds[curStateNum]);
 
     }
-    transitions = {
+    var transitions = {
       gotoState: gotoState,
       nextState: nextState,
       animateToState: animateToState,
       gotoMovieState: gotoMovieState,
-      forceStart: force.start
     };
     return transitions;
 

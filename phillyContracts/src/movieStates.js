@@ -9,9 +9,12 @@ var layoutStates = require('./layoutStates');
 var statesArray = [{
         id: 'initial',
         layout: 0,
+        layoutPop: 0,
         camX: 0,
         camY: 0,
         camZ: 100,
+        revOpacity: 1,
+        popOpacity: 0,
         camRotX: 0,
         reflect: 0.7,
         reflectPhoto:0,
@@ -34,11 +37,12 @@ var statesArray = [{
         id: 'initialPullback',
         camZ: layoutStates.wholeCity.camPos.z + 50,
         layout: 1,
-        reflect: 0.1
+        reflect: 0.2
 
     },
     {
         id: 'splitToDepts',
+        reflect: 0.07,
         layout: 2,
         camX: layoutStates.deptByCat.camPos.x,
         camY: layoutStates.deptByCat.camPos.y,
@@ -74,7 +78,7 @@ var statesArray = [{
     }, {
         id: 'securityExamples',
         camX: -180,
-        camZ: 470,
+        camZ: 500,
         camY: -15,
         lightI: 0.7,
         revealSCircles: 1,
@@ -128,7 +132,7 @@ var statesArray = [{
         camY: -20,
         camZ: 450,
         layout: 8,
-        reflect: 0
+        reflect: 0,
 
 
 
@@ -136,7 +140,7 @@ var statesArray = [{
         id: 'contractsImportant',
         camZ: 370,
         reflectPhoto:2,
-        reflect: 0.2,
+        reflect: 0.07,
 
     }, {
         id: 'procurement',
@@ -159,6 +163,8 @@ var statesArray = [{
           camY: -70,
           camZ: 170,
           revealLowestPrice:1,
+          reflect: 0,
+
 
 
 
@@ -168,11 +174,17 @@ var statesArray = [{
         camZ: 180,
         camX: 200,
         camY: -20,
-        reflect: 0
+        reflect: 0.8,
+        reflectPhoto:4,
+        layout: 10,
+
+
   }, {
       id: 'rfpReveal',
       camY: -260,
-      revealRfp:1
+      revealRfp:1,
+      revOpacity: 0,
+
   }, {
       id: 'rfpBidders',
       camX: 200,
@@ -207,6 +219,18 @@ var statesArray = [{
       camX: 240,
       camY: -360,
       camZ: 240,
+  }, {
+      id: 'popTotal',
+      popOpacity: 1,
+      camY: -780,
+  }, {
+      id: 'popByRace',
+      layoutPop: 1,
+      camZ: 500,
+  }, {
+      id: 'popByRaceGender',
+      layoutPop: 2,
+      camZ: 500,
   },
 ];
 

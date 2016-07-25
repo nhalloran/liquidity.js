@@ -3,7 +3,8 @@ var sequenceTween = require('./neilviz/util/sequenceTween');
 
 module.exports = function(params) {
     var objects = params.objects;
-    var layoutTransitions = params.layoutTransitions;
+    var layoutTransitionsRev = params.layoutTransitionsRev;
+    var layoutTransitionsPop = params.layoutTransitionsPop;
     var camPos = objects.camera.position;
     var camRot = objects.camera.rotation;
 
@@ -55,13 +56,27 @@ module.exports = function(params) {
           objects.metaballs.setPhoto(Math.round(this.val));
         },
         layout: function(){
-          layoutTransitions.gotoMovieState(this.val);
+          layoutTransitionsRev.gotoMovieState(this.val);
         },
-        forceStart: layoutTransitions.forceStart,
+        layoutPop: function(){
+          layoutTransitionsPop.gotoMovieState(this.val);
+        },
+        revOpacity: function(){
+          objects.revDots.visible =  (this.val > 0);
+          objects.metaballs.visible =  objects.revDots.visible || objects.popDots.visible ;
+
+        },
+        popOpacity: function(){
+          objects.popDots.visible =  (this.val > 0);
+          objects.metaballs.visible =  objects.revDots.visible || objects.popDots.visible ;
+
+        },
+  /*      forceStart: layoutTransitions.forceStart,
         highlightPoverty: function(){
           objects.backdrop.highlights.states.poverty.reveal = this.val;
             objects.backdrop.highlights.update();
         },
+      */
         highlightSecurity: function(){
           objects.backdrop.highlights.states.security.reveal = this.val;
             objects.backdrop.highlights.update();

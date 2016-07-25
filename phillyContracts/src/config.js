@@ -13,11 +13,14 @@ var config = {
   captureWidth: 1280,
   captureHeight: 720,
   captureFPS: 30,
-  captureDuration:10, // seconds
+  captureDuration:185, // seconds
   lightIFactor: 1.4,
-  colorCanvasRez: 4
+  colorCanvasRez: 4,
+  popDotsPos: [230,-780]
 
 };
+
+config.captureAlphaRatio = 45 / config.captureFPS;
 
 if (config.capture) config.movie = true;
 

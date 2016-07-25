@@ -512,12 +512,15 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors, colo
 
     this.redrawColorCanvas = function() {
         var me = this;
+
         var drawColorCanvasBall = function(radius) {
             var ctx = me.colorCanvas.getContext('2d');
+            var ctx2 = me.secularCanvas.getContext('2d');
             var cWidth = me.colorCanvas.width;
             var cHeight = me.colorCanvas.height;
             var ccw = me.colorCircleCanvasWidth;
             var ccw2 = ccw * radius;
+
 
             return function(ball) {
                 //var color = me.colorObjLookup[ball.c];
@@ -527,6 +530,14 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors, colo
                 //ctx.fill();
                 var circle = me.colorCirleCanvasLookup[ball.c];
                 ctx.drawImage(circle, 0, 0, ccw, ccw, ball.x * cWidth - ccw2 / 2, ball.y * cWidth - ccw2 / 2, ccw2, ccw2);
+
+                var spec = Math.round(20 + ball.r * 255 * 0.8);
+                ctx2.beginPath();
+                ctx2.arc(ball.x * cWidth, ball.y * cWidth,ccw2/2 , 0, 2 * Math.PI, false);
+                ctx2.fillStyle = 'rgb(' + spec + ',' + spec + ',' + spec + ')';
+                ctx2.fill();
+
+
             };
 
         };
@@ -538,6 +549,8 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors, colo
 
 
             material.map.needsUpdate = true;
+            material.specularMap.needsUpdate = true;
+
 
 
             //	ctx.endPath();
@@ -551,14 +564,11 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors, colo
 
     this.makeSpecularMap = function() {
         this.secularCanvas = document.createElement('canvas');
-        var canvasWidth = 512;
+        var canvasWidth = this.colorCanvasWidth;
         this.secularCanvas.width = canvasWidth;
         this.secularCanvas.height = canvasWidth;
-        var ctx = this.secularCanvas.getContext('2d');
-        ctx.beginPath();
-        ctx.rect(0, 0, 2048, 2048);
-        ctx.fillStyle = 'white';
-        ctx.fill();
+        //  	document.getElementById('stage').appendChild(this.secularCanvas);
+
 
 
         return new THREE.Texture(this.secularCanvas);
@@ -881,7 +891,7 @@ var MarchingCubes = function(resolution, material, enableUvs, enableColors, colo
         }
 
         this.redrawColorCanvas();
-        this.redrawSpecularMap();
+        //this.redrawSpecularMap();
         this.colorCanvasBalls = [];
 
 

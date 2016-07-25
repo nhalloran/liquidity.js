@@ -17,7 +17,9 @@ var durations = [
     { n: 'BULBS', t: 8000 },
     { n: 'CURSES', t: 8000 },
     { n: 'PRESCRIPT', t: 8000 },
-    { n: 'RESOURSES', t: 8000 }
+    { n: 'RESOURSES', t: 8000 },
+    { n: 'POP_TOTAL', t: 8000 },
+    { n: 'POP_RACE', t: 8000 }
 ];
 
 var consts = {

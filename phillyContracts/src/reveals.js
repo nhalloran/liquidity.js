@@ -10,7 +10,7 @@ var resourceNetworkScale = 0.1;
 var params = {
     lowestPrice: {
         x: 404,
-        y: -125,
+        y: -115,
         width: 119, //2800X3155
         height: 119,
         mapUrl: '/textures/drawing-lowestPrice-fill-512.png',

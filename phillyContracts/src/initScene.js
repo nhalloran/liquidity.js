@@ -1,12 +1,14 @@
 var THREE = require('three');
 var TWEEN = require('tween.js');
 var d3 = require('d3');
-var CircleMaterial = require('./neilviz/CircleMaterial');
 var BufferedPlanesGeometry = require('./neilviz/BufferedPlanesGeometry');
 var mix = require('./neilviz/util/mix');
 //var forceLayout = require('./force');
-var d3ForceLayout = require('./d3ForceLayout');
+var liquidDots = require('./liquidDots');
 var layoutTransitions = require('./layoutTransitions');
+var layoutStates = require('./layoutStates');
+var layoutStatesPop = require('./layoutStatesPop');
+var movieLayoutOrder = require('./movieLayoutOrder');
 var movieUpdates = require('./movieUpdates');
 var movieTweens = require('./movieTweens');
 var movieStates = require('./movieStates');
@@ -36,7 +38,7 @@ if (config.capture) {
     display: true,
     framerate: config.captureFPS,
     motionBlurFrames: 1,
-    quality: 95,
+    quality: 100,
     format: 'webm', //'jpg',
     //  timeLimit: 5,
     //  onProgress: function( p ) { progress.style.width = ( p * 100 ) + '%' }
@@ -54,6 +56,7 @@ var depts = model.depts;
 var dotValue = model.dotValue;
 var totalDots = model.totalDots;
 var nodes = model.nodes;
+var popNodes = model.popNodes;
 var cats = model.cats;
 
 var time = 0;
@@ -62,9 +65,8 @@ var clock = new THREE.Clock();
 var objects = {};
 
 var camera, scene, renderer;
-var mesh;
+var revDots;
 
-var dotRadius = config.dotRadius;
 var showCircles = config.showCircles;
 var showMetaBalls = config.showMetaBalls;
 
@@ -84,7 +86,6 @@ function init() {
   camera.position.set(movieStates.initial.camX, movieStates.initial.camY, movieStates.initial.camZ);
 
   var textObjects = textItems.getObjects();
-  window.textObjects = textObjects;
 
 
   audioEl = document.getElementById('narration');
@@ -111,96 +112,51 @@ function init() {
   var ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
   //scene.add(ambientLight);
 
-  var circleMat = new CircleMaterial({
-    color: 0xff0000,
-    indivColors: true
-  });
 
-  var width = 960,
-    height = 500;
-
-  var ysum = 0;
 
 
   scene.add(backdrop);
 
 
 
-
-
-  var circleGeo = new BufferedPlanesGeometry({
-    count: totalDots,
-    indivColors: true
+  revDots = liquidDots.build({
+    nodes:nodes,
+    width: 960,
+    height: 500,
+    dotRadius: config.dotRadius
   });
 
-
-  var dotIndex = 0;
-  nodes.forEach(function(node) {
-
-
-    var geo = new THREE.PlaneBufferGeometry(1, 1);
-    var dept = depts[node.did];
-
-    circleGeo.merge(geo, dotIndex * 4);
-    circleGeo.mergeIndex(geo, dotIndex);
-    circleGeo.setSingleColor(dotIndex, dept.cat.colorObj);
-
-    dotIndex++;
-
-
-  });
-
-
-  force = d3ForceLayout()
-    .nodes(nodes)
-    .links([])
-    .gravity(0)
-
-  .charge(-80)
-    //.theta(0.2)
-    .chargeDistance(dotRadius * 0.8)
-    .size([width, height])
-    .on("tick", tick);
-
-
-
-  function tick(e) {
-    var k = 0.1 * e.alpha;
-
-
-
-
-
-    // Push nodes toward their designated focus.
-    nodes.forEach(function(o, i) {
-      //if(i/nodes.length < transState.t){
-      var foci = o.foci;
-      var distSq = (foci.y - o.y) * (foci.y - o.y) + (foci.x - o.x) * (foci.x - o.x);
-      //less than 20,000 should start to taper
-      var innerPull = 0.1 * Math.max(0, Math.min(1, (15 - foci.distSq / 1000)));
-      var antidense = (distSq > foci.distSq) ? 1 : innerPull;
-      o.y += (foci.y - o.y) * k * antidense;
-      o.x += (foci.x - o.x) * k * antidense;
-      //}
-    });
-
-
-    nodes.forEach(function(node, i) {
-      circleGeo.renderSinglePositions(i, node, dotRadius);
-    });
-
-
-  }
-
-
-  var circles = new THREE.Mesh(circleGeo, circleMat);
   if (showCircles)
-    scene.add(circles);
+    scene.add(revDots);
+
+  popDots = liquidDots.build({
+      nodes:popNodes,
+      width: 960,
+      height: 500,
+      dotRadius: config.dotRadius
+    });
+
+    popDots.position.x = config.popDotsPos[0];
+    popDots.position.y = config.popDotsPos[1];
+
+    if (showCircles){
+      scene.add(revDots);
+      scene.add(popDots);
+    }
+    objects.revDots = revDots;
+    objects.popDots = popDots;
+    objects.popDots.visible = false;
+
+
+
+
+
+
+
 
 
   var revealObjects = reveals.makeObjects(textures);
   objects.revealObjects = revealObjects;
-  window.revealObjects = revealObjects;
   Object.keys(revealObjects).forEach(function(key){scene.add(revealObjects[key]);});
 
 
@@ -209,7 +165,6 @@ function init() {
     metaballs = metaballs.build();
     scene.add(metaballs);
     //for debugging
-    window.metaballs = metaballs;
   }
 
 
@@ -217,7 +172,6 @@ function init() {
 
 
 
-  force.start();
 
 
   Object.keys(textObjects).forEach(function(key) {
@@ -226,7 +180,6 @@ function init() {
     textObjects[key].updateMatrix();
   });
 
-  window.textObjects = textObjects;
 
 
 
@@ -261,14 +214,26 @@ function init() {
   if (!config.capture) window.addEventListener('resize', onWindowResize, false);
 
 
-  layoutTransitions = layoutTransitions({
+  var layoutTransitionsRev = layoutTransitions({
     textObjects: textObjects,
     showCircles: showCircles,
     nodes: nodes,
-    circleGeo: circleGeo,
     camera: camera,
     clock: clock,
-    force: force,
+    dots: revDots,
+    layoutStates:layoutStates,
+    movieLayoutOrder: movieLayoutOrder.rev
+  });
+
+  var layoutTransitionsPop = layoutTransitions({
+    textObjects: {},
+    showCircles: {},
+    nodes: popNodes,
+    camera: camera,
+    clock: clock,
+    dots: popDots,
+    layoutStates:layoutStatesPop,
+    movieLayoutOrder: movieLayoutOrder.pop
   });
 
   // movie init
@@ -279,23 +244,25 @@ function init() {
   objects.backdrop = backdrop;
   if (config.movie){
     movieUpdates = movieUpdates({
-      layoutTransitions: layoutTransitions,
+      layoutTransitionsRev: layoutTransitionsRev ,
+      layoutTransitionsPop: layoutTransitionsPop ,
       objects: objects
     });
-    movieTweens = movieTweens({
-      movieUpdates: movieUpdates
-    });
-    movieTweens.forEach(function(tween){
-      tween.start();
+    movieTweens.init({
+      movieUpdates: movieUpdates,
+      revDots: revDots,
+      popDots: popDots
     });
 
   }
 
 
-  if (config.movie)
-    layoutTransitions.gotoMovieState(0);
-  else
-    layoutTransitions.gotoState('wholeCity');
+  if (config.movie){
+    layoutTransitionsRev.gotoMovieState(0);
+    layoutTransitionsPop.gotoMovieState(0);
+  }
+  //else
+  //  layoutTransitions.gotoState('wholeCity');
 
   //force.friction(0);
 
@@ -305,14 +272,14 @@ function init() {
 
 
 
-  renderer.domElement.onclick = function() {
-    layoutTransitions.nextState();
-  };
+//  renderer.domElement.onclick = function() {
+//    layoutTransitions.nextState();
+//  };
 
   //for camera positioning
   window._cp = camera.position;
   window._cr = camera.rotation;
-  window.metaballs = metaballs;
+  window.objects = objects;
   window.TWEEN = TWEEN;
 
 
@@ -332,12 +299,12 @@ function onWindowResize() {
 
 function animate() {
   requestAnimationFrame(animate);
-  time = (config.movie) ? audioEl.currentTime : clock.getElapsedTime();
-  TWEEN.update(time * 1000);
-  force.tick();
-  //  var delta = clock.getDelta();
-  //	time += delta * 0.5;
-  if (showMetaBalls)
+  if (config.movie)
+    movieTweens.update(audioEl.currentTime);
+  else
+    TWEEN.update(clock.getElapsedTime() * 1000);
+
+  if (showMetaBalls && metaballs.visible)
     metaballs.update(nodes);
   renderer.render(scene, camera);
 
@@ -351,9 +318,10 @@ function captureFrames() {
         time = f * frameDur;
         f++;
         if (time < config.captureDuration){
-          TWEEN.update(time * 1000);
-          force.tick();
-          if (showMetaBalls) metaballs.update(nodes);
+          movieTweens.update(time);
+
+          if (showMetaBalls && metaballs.visible) metaballs.update(nodes);
+
           renderer.render(scene, camera);
           capturer.capture(renderer.domElement);
           requestAnimationFrame(nextFrame);

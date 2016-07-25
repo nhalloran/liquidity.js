@@ -60,7 +60,7 @@ states.wholeCity = function() {
         x: 0,
         y: 0,
         distSq: radiusSquared(model.totalBudget),
-        reflect:1
+        reflect: 1
     };
 
     var state = {
@@ -127,7 +127,7 @@ states.deptByCat = function() {
                 y: yC,
                 distSq: radiusSquared(dept.t),
                 did: dept.did,
-                reflect:0
+                reflect: 1
 
 
             };
@@ -144,7 +144,8 @@ states.deptByCat = function() {
             nid: i,
             foci: state.focis[deptFoci[node.did]],
             color: hexToRgbArray(depts[node.did].cat.color),
-            fid: deptFoci[node.did]
+            fid: deptFoci[node.did],
+
         });
     });
 
@@ -176,7 +177,7 @@ states.catTotals = function() {
             y: 200 - radius(cat.t),
             distSq: radiusSquared(cat.t),
             cid: cat.cid,
-            reflect:1
+            reflect: 1
 
 
         };
@@ -225,6 +226,12 @@ var focisC = states.deptByCatByContract.focis.map(function(foci) {
     return { cc: Math.round(dept.tc / dotValue) };
 });
 
+var bhFid;
+states.deptByCatByContract.focis.forEach(function(foci, fid) {
+    if (foci.did === model.behavioralHealthDid) bhFid = fid;
+});
+
+
 var bhColor = hexToRgbArray(0x010101);
 var nodesC = states.deptByCatByContract.nodes.map(function(n) {
     var node = extend({}, n);
@@ -232,6 +239,9 @@ var nodesC = states.deptByCatByContract.nodes.map(function(n) {
     if (fociC.cc > 0) {
         node.color = bhColor;
         fociC.cc--;
+    } else if (node.fid === bhFid) {
+        node.yy = -0.2;
+
     }
     return node;
 });
@@ -243,10 +253,7 @@ states.deptByCatByContract.nodes = nodesC;
 states.behavioralHealth = extend({}, states.deptByCatByContract);
 states.behavioralHealth.focis = states.behavioralHealth.focis.slice(0);
 
-var bhFid;
-states.behavioralHealth.focis.forEach(function(foci, fid) {
-    if (foci.did === model.behavioralHealthDid) bhFid = fid;
-});
+
 
 var oldFoci = extend({}, states.behavioralHealth.focis[bhFid]);
 var newBhFoci = extend({}, states.behavioralHealth.focis[bhFid]);
@@ -269,9 +276,9 @@ states.behavioralHealth.text.push('bh_nct');
 
 // make bh reflective
 states.behavioralHealthPhoto = extend({}, states.behavioralHealth);
-var bhPhotoFoci = extend({},newBhFoci,{reflect:1});
-states.behavioralHealthPhoto.nodes =  states.behavioralHealthPhoto.nodes.map(function(node) {
-    if (node.fid === bhFid) return extend({}, node, { foci: bhPhotoFoci });
+var bhPhotoFoci = extend({}, newBhFoci, { reflect: 1 });
+states.behavioralHealthPhoto.nodes = states.behavioralHealthPhoto.nodes.map(function(node) {
+    if (node.fid === bhFid && node.color === bhColor) return extend({}, node, { foci: bhPhotoFoci });
     return node;
 });
 
@@ -282,24 +289,27 @@ states.contractNonContract = function() {
     var cFoci = {
         y: 0,
         x: 180,
-        distSq: radiusSquared(model.contractTotal)
+        distSq: radiusSquared(model.contractTotal),
+        reflect:1
     };
 
     var nFoci = {
         y: 0,
         x: -180,
-        distSq: radiusSquared(model.nonContractTotal)
+        distSq: radiusSquared(model.nonContractTotal),
+        reflect:1
+
     };
 
-    var nodes = states.behavioralHealth.nodes.map(function(node){
-      var foci = ( node.color === bhColor) ? cFoci : nFoci;
-      return extend({},node,{foci:foci});
+    var nodes = states.behavioralHealth.nodes.map(function(node) {
+        var foci = (node.color === bhColor) ? cFoci : nFoci;
+        return extend({}, node, { foci: foci, yy: 0 });
     });
 
     var state = {
-        focis: [cFoci,nFoci],
-        nodes: nodes ,
-        text: ['con_t_0','con_t_1','con_n_0','con_n_1'],
+        focis: [cFoci, nFoci],
+        nodes: nodes,
+        text: ['con_t_0', 'con_t_1', 'con_n_0', 'con_n_1'],
     };
 
     return state;
@@ -310,48 +320,65 @@ states.contractProcurement = function() {
     var cFoci = {
         y: 0,
         x: 180,
-        distSq: radiusSquared(model.contractTotal - model.procurementTotal)
+        distSq: radiusSquared(model.contractTotal - model.procurementTotal),
+        reflect: 0
+
     };
 
     var cpFoci = {
         y: 0,
         x: 400,
-        distSq: radiusSquared(model.procurementTotal ),
-        reflect:1
+        distSq: radiusSquared(model.procurementTotal),
+        reflect: 1
     };
 
     var nFoci = {
         y: 0,
         x: -180,
-        distSq: radiusSquared(model.nonContractTotal)
+        distSq: radiusSquared(model.nonContractTotal),
+        reflect: 0
     };
 
     pCount = Math.round(model.procurementTotal / model.dotValue);
 
-    var nodes = states.behavioralHealth.nodes.map(function(node){
-      var foci;
-      if (node.color !== bhColor) foci = nFoci;
-      else if (pCount <= 0) foci = cFoci;
-      else {
-        pCount--;
-        foci = cpFoci;
-      }
+    var nodes = states.behavioralHealth.nodes.map(function(node) {
+        var foci;
+        if (node.color !== bhColor) foci = nFoci;
+        else if (pCount <= 0) foci = cFoci;
+        else {
+            pCount--;
+            foci = cpFoci;
+        }
 
 
 
 
-      return extend({},node,{foci:foci});
+        return extend({}, node, { foci: foci });
     });
 
+
+
+
     var state = {
-        focis: [cFoci,cpFoci,nFoci],
-        nodes: nodes ,
+        focis: [cFoci, cpFoci, nFoci],
+        nodes: nodes,
         text: [] //['proc_t_0','proc_n_0', 'proc_s_0','proc_t_1','proc_n_1', 'proc_s_1','proc_t_2','proc_n_2'],
     };
 
     return state;
 
 }();
+
+
+states.contractProfessional = extend({}, states.contractProcurement);
+states.contractProfessional.focis = states.contractProfessional.focis.map(function(foci) {
+    var reflect = 1 - (foci.reflect || 0);
+    return extend({}, foci, { reflect: reflect });
+});
+states.contractProfessional.nodes = states.contractProfessional.nodes.map(function(node) {
+    var fi = states.contractProcurement.focis.indexOf(node.foci);
+    return extend({}, node, { foci: states.contractProfessional.focis[fi] });
+});
 
 
 

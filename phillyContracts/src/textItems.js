@@ -67,7 +67,7 @@ cats.forEach(function(cat) {
 
     });
     //params['cat_n_' + cat.cid] =  {items:[{text: cat.name.toUpperCase().substring(0,22) , y: 8 * nScale,fontSize:16 * nScale}],color:0x000000, x:foci.x, y:210};
-    params['cat_n_' + cat.cid] = { items: items, color: 0x000000, x: foci.x, y: 230, fontSize: 20, opacity: 0.5 };
+    params['cat_n_' + cat.cid] = { items: items, color: 0x000000, x: foci.x, y: 250, fontSize: 20, opacity: 0.5 };
 
 });
 var focisByDid = [];

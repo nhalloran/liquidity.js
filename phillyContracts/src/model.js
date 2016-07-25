@@ -3,6 +3,7 @@ var cats = require('./data/cats');
 var depts = require('./data/depts');
 var initialPositions = require('./data/initialPositions');
 var config = require('./config');
+var phillyDemographics = require('./data/phillyDemographics.js');
 var budget = require('dsv!./data/phillyBudget2015.csv');
 
 var deptsLookup = {};
@@ -133,6 +134,8 @@ depts.forEach(function(dept, did) {
   }
 });
 
+//population nodes should
+
 function sortScore(node){
   var dept = depts[node.did];
   return dept.cat.x * 100000000 - dept.t;
@@ -142,13 +145,55 @@ nodes.sort(function(a,b){
 });
 
 
+//population nodes. same count as rev
+
+var dotValuePop = 100/nodes.length;
+
+var radiusSquaredPop = function(p){
+  var t = p / dotValuePop * dotValue;
+  return radiusSquared(t);
+};
+
+
+
+
+var raceCounts = phillyDemographics.races.map(function(race){
+  return Math.round(race.p / 100 * nodes.length);
+});
+
+function getNextRace(){
+  for (var i = Math.floor(Math.random() * raceCounts.length), j = 0; j < raceCounts.length; i++, j++){
+    if(raceCounts[i%raceCounts.length] >=0){
+      raceCounts[i%raceCounts.length] --;
+      return i%raceCounts.length;
+    }
+  }
+  return 0;
+
+}
+
+
+var popNodes = nodes.map(function(node){
+  return {
+    x: node.x,
+    y: node.y,
+    z: 0,
+    color: {r:0,g:0,b:0},
+    rid: getNextRace(),
+    gender: (Math.random() > 0.5) ? 'm' : 'f'
+  };
+});
+
+
+
 module.exports = {
+  nodes: nodes,
+  popNodes: popNodes,
   cats: cats,
   catsById: catsById,
   depts: depts,
   totalDots: totalDots,
   dotValue: dotValue,
-  nodes: nodes,
   totalBudget: totalBudget,
   radiusSquared: radiusSquared,
   radius: radius,
@@ -157,6 +202,8 @@ module.exports = {
   BHContractTotal: BHContractTotal,
   contractTotal: contractTotal,
   nonContractTotal: nonContractTotal,
-  procurementTotal: procurementTotal
+  procurementTotal: procurementTotal,
+  phillyRaces: phillyDemographics.races,
+  radiusSquaredPop: radiusSquaredPop
 
 };
