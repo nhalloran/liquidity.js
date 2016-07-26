@@ -56,7 +56,7 @@ var statesArray = [{
     }, {
         id: 'backToDepts',
         layout: 4,
-        camZ: 700,
+        camZ: 650,
         camY: -300,
         //camRotX: -0.3,
     }, {
@@ -77,8 +77,8 @@ var statesArray = [{
         highlightEpsilon: 1
     }, {
         id: 'securityExamples',
-        camX: -180,
-        camZ: 500,
+        camX: -200,
+        camZ: 550,
         camY: -15,
         lightI: 0.7,
         revealSCircles: 1,
@@ -175,6 +175,7 @@ var statesArray = [{
         camX: 200,
         camY: -20,
         reflect: 0.8,
+        revealLowestPrice:2,
         reflectPhoto:4,
         layout: 10,
 
@@ -204,7 +205,7 @@ var statesArray = [{
       id: 'prescriptive',
       camX: 170,
       camY: -260,
-      camZ: 130,
+      camZ: 145,
       revealCurses: 2,
       revealRfp:0.4,
       revealDothis:1
@@ -222,15 +223,41 @@ var statesArray = [{
   }, {
       id: 'popTotal',
       popOpacity: 1,
-      camY: -780,
+      reflectPhoto:5,
+      reflect:0.8,
+      camY: -775,
+      camZ: 170,
+      revealRfp:2,
+      revealResourcesNetwork:2,
+      revealBidders:2,
+      revealDothis:2
   }, {
       id: 'popByRace',
       layoutPop: 1,
-      camZ: 500,
+      camZ: 350,
+
+
+
   }, {
       id: 'popByRaceGender',
       layoutPop: 2,
-      camZ: 500,
+      camX: 230,
+      camY: -690,
+      camZ: 385
+  }, {
+      id: 'whiteMale',
+      layoutPop: 3,
+      camX: 190,
+      camY: -610,
+      camZ: 300
+  }, {
+      id: 'backToRev',
+      revOpacity:1,
+      camY: 0,
+
+  }, {
+      id: 'whiteMaleRev',
+
   },
 ];
 

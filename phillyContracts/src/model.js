@@ -145,9 +145,12 @@ nodes.sort(function(a,b){
 });
 
 
-//population nodes. same count as rev
+//population nodes. same count as contractTotal
 
-var dotValuePop = 100/nodes.length;
+
+var popDotCount = Math.round(contractTotal/dotValue);
+
+var dotValuePop = 100/popDotCount;
 
 var radiusSquaredPop = function(p){
   var t = p / dotValuePop * dotValue;
@@ -158,7 +161,7 @@ var radiusSquaredPop = function(p){
 
 
 var raceCounts = phillyDemographics.races.map(function(race){
-  return Math.round(race.p / 100 * nodes.length);
+  return Math.round(race.p / 100 * popDotCount);
 });
 
 function getNextRace(){
@@ -173,16 +176,18 @@ function getNextRace(){
 }
 
 
-var popNodes = nodes.map(function(node){
-  return {
-    x: node.x,
-    y: node.y,
+var popNodes = [];
+
+for (var i = 0; i < popDotCount; i++){
+  popNodes.push({
+    x: 0,
+    y: 0,
     z: 0,
     color: {r:0,g:0,b:0},
     rid: getNextRace(),
     gender: (Math.random() > 0.5) ? 'm' : 'f'
-  };
-});
+  });
+}
 
 
 

@@ -76,8 +76,8 @@ movieTweens.init = function(params) {
         simpleTween(states.backToDepts, 'layout', 2000)
         .delay(BACK_TO_DEPTS_START),
 
-        simpleTween(states.backToDepts, 'camZ', BACK_TO_DEPTS_DUR * 0.7)
-        .delay(BACK_TO_DEPTS_START).easing(InOut),
+        simpleTween(states.backToDepts, 'camZ', BACK_TO_DEPTS_DUR * 0.55)
+        .delay(BACK_TO_DEPTS_START + BACK_TO_DEPTS_DUR * 0.4).easing(InOut),
         simpleTween(states.backToDepts, 'camY', BACK_TO_DEPTS_DUR * 0.8)
         .delay(BACK_TO_DEPTS_START).easing(InOut),
 
@@ -224,7 +224,8 @@ movieTweens.init = function(params) {
         .easing(InOut),
 
 
-
+        simpleTween(states.profServices, 'revealLowestPrice', 600)
+        .delay(PROFESSIONAL_START + PROFESSIONAL_DUR * 0.1),
         simpleTween(states.profServices, 'camX', PROFESSIONAL_DUR * 0.5).easing(InOut)
         .delay(PROFESSIONAL_START),
         simpleTween(states.profServices, 'camY', PROFESSIONAL_DUR * 0.4).easing(InOut)
@@ -291,24 +292,50 @@ movieTweens.init = function(params) {
         .delay(RESOURSES_START + RESOURSES_DUR * 0.2),
 
         // Resources & network
-        camTween(states.network, RESOURSES_DUR * 0.2).easing(InOut)
-        .delay(RESOURSES_START + RESOURSES_DUR * 0.4),
+        camTween(states.network, RESOURSES_DUR * 0.22).easing(InOut)
+        .delay(RESOURSES_START + RESOURSES_DUR * 0.5),
 
         simpleTween(states.popTotal, 'popOpacity', 0)
         .delay(POP_TOTAL_START),
+        simpleTween(states.popTotal, 'reflect', 0)
+        .delay(POP_TOTAL_START),
+        simpleTween(states.popTotal, 'reflectPhoto', 0)
+        .delay(POP_TOTAL_START),
 
-        camTween(states.popTotal, POP_TOTAL_DUR * 0.3).easing(InOut)
+        simpleTween(states.popTotal, 'revealResourcesNetwork', 0)
+        .delay(POP_TOTAL_START + POP_TOTAL_DUR * 0.7),
+        simpleTween(states.popTotal, 'revealRfp', 0)
+        .delay(POP_TOTAL_START + POP_TOTAL_DUR * 0.7),
+        simpleTween(states.popTotal, 'revealBidders', 0)
+        .delay(POP_TOTAL_START + POP_TOTAL_DUR * 0.7),
+        simpleTween(states.popTotal, 'revealDothis', 0)
+        .delay(POP_TOTAL_START + POP_TOTAL_DUR * 0.7),
+
+
+
+        camTween(states.popTotal, POP_TOTAL_DUR * 0.7).easing(InOut)
         .delay(POP_TOTAL_START),
 
         camTween(states.popByRace, POP_RACE_DUR * 0.3).easing(InOut)
         .delay(POP_RACE_START),
 
-        simpleTween(states.popByRace, 'layoutPop', POP_RACE_DUR * 0.3).easing(InOut)
+        simpleTween(states.popByRace, 'layoutPop', POP_RACE_DUR * 0.3)
         .delay(POP_RACE_START),
 
 
-        simpleTween(states.popByRaceGender, 'layoutPop', POP_RACE_DUR * 0.3).easing(InOut)
-        .delay(POP_RACE_START+ 4000),
+        simpleTween(states.popByRaceGender, 'layoutPop', POP_GENDER_DUR * 0.3)
+        .delay(POP_GENDER_START),
+        camTween(states.popByRaceGender, POP_GENDER_DUR * 0.2).easing(InOut)
+        .delay(POP_GENDER_START),
+
+
+        simpleTween(states.whiteMale, 'layoutPop', POP_WHITE_MALE_DUR * 0.3)
+        .delay(POP_WHITE_MALE_START),
+        camTween(states.whiteMale, POP_WHITE_MALE_DUR * 0.2).easing(InOut)
+        .delay(POP_WHITE_MALE_START),
+
+        simpleTween(states.whiteMaleRev, 'revOpacity', 0)
+        .delay(REV_WHITE_MALE_START),
 
 
 

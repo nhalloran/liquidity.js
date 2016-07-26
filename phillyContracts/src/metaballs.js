@@ -45,7 +45,7 @@ function build() {
     //effect.enableUvs = false;
 
 
-    effect.update = function(nodes) {
+    effect.update = function(nodeSets) {
 
         effect.reset();
 
@@ -55,12 +55,13 @@ function build() {
 
         //subtract = 12;
         subtract = 40;
-        strength = 0.13 * 0.1 * 1.2 / ((Math.sqrt(nodes.length) - 1) / 4 + 1);
+        strength = 0.13 * 0.1 * 1.2 / ((Math.sqrt(nodeSets[0].length) - 1) / 4 + 1);
 
-        for (i = 0; i < nodes.length; i++) {
-            var node = nodes[i];
-            effect.addBall(node.x / scaleFix + posFix.x, node.y / scaleFix + posFix.y, posFix.z, strength, subtract, node.color, node.reflect);
-
+        for (var ns = 0; ns < nodeSets.length; ns++){
+          for (i = 0; i < nodeSets[ns].length; i++) {
+            var node = nodeSets[ns][i];
+            effect.addBall((node.x - this.position.x) / scaleFix + posFix.x , (node.y- this.position.y) / scaleFix + posFix.y, posFix.z, strength, subtract, node.color, node.reflect);
+          }
         }
 
 

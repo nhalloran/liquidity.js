@@ -60,8 +60,8 @@ states.wholeCity = function() {
 
     // state
     var foci = {
-        x: 0,
-        y: 0,
+        x: config.popDotsPos[0],
+        y: config.popDotsPos[1],
         //distSq: radiusSquared(model.totalBudget), // uses rev as
         distSq: radiusSquaredPop(100), // uses rev as
         reflect: 1
@@ -95,30 +95,29 @@ states.byRace = function() {
 
     // state
 
-    var x = -400;
-    var r = 0, prevR = 0;;
+    var x = -300;
+    var r = 0, prevR = 0;
+    var focisById = {};
+
     var focis = model.phillyRaces.map(function(race,i){
         r = Math.sqrt(radiusSquaredPop(race.p));
-        x += r + prevR + 4 + 30;
+        x += r + prevR + 40;
         prevR = r;
         return {
           x: x,
           y: 0,
           //distSq: radiusSquared(model.totalBudget), // uses rev as
           distSq: radiusSquaredPop(race.p), // uses rev as
-          reflect: 1
+          reflect: 1,
+          rid: i,
+          pop: race.p
         };
     });
 
     var state = {
         focis: focis,
         nodes: [],
-        text: [],
-        camPos: {
-            x: 0,
-            y: 0,
-            z: 300
-        },
+        text: model.phillyRaces.map(function(race){return 'race_' + race.id;}),
     };
 
     popNodes.forEach(function(node, i) {
@@ -141,23 +140,22 @@ states.byRaceGender = function() {
   var focisById = {};
 
   states.byRace.focis.forEach(function(foci,i){
-    var female = foci;
-    var male = extend({},foci,{y:foci.y + 300});
+    var female = extend({},foci,{distSq: foci.distSq/2, pop: foci.pop/2});
+    var male = extend({},foci,{y:foci.y + 180, distSq: foci.distSq/2, pop: foci.pop/2});
     focis.push(female);
     focis.push(male);
     focisById['m' + i] = male;
     focisById['f' + i] = female;
   });
 
+  var text = states.byRace.text.slice(0);
+  text.push('male');
+  text.push('female');
   var state = {
       focis: focis,
+      focisById: focisById,
       nodes: [],
-      text: [],
-      camPos: {
-          x: 0,
-          y: 0,
-          z: 300
-      },
+      text: text,
   };
 
   popNodes.forEach(function(node, i) {
@@ -170,6 +168,31 @@ states.byRaceGender = function() {
 
   return state;
 
+
+}();
+
+states.whiteMale = function() {
+
+  var focis = [];
+  var m0 = states.byRaceGender.focisById.m0;
+
+  var nonFoci = extend({}, m0, {
+    pop: 100-m0.pop,
+    distSq: radiusSquaredPop( 100-m0.pop),
+    x: m0.x + 250
+  });
+
+  var nodes = states.byRaceGender.nodes.map(function(node){
+      if (node.foci === m0) return node;
+      return extend({},node,{foci:nonFoci});
+  });
+
+
+  return {
+      focis: focis,
+      nodes: nodes,
+      text: [],
+  };
 
 }();
 

@@ -12,11 +12,7 @@ module.exports = function(params) {
 
     var pCircles = ([1,2,3,4]).map(function(n){return objects.revealObjects['circleP' + n];});
     var sCircles = ([1,2,3,4,5,6]).map(function(n){return objects.revealObjects['circleS' + n];});
-    function updateReveal(id,val){
-      objects.revealObjects[id].material.uniforms.revealed.value = Math.min(1,val);
-      objects.revealObjects[id].material.uniforms.opacity.value = Math.min(1,2-val);
-      objects.revealObjects[id].visible = (val > 0) && (val < 2);
-    }
+
     function updateRevealGen(id){
       //faster version of above
       var obj = objects.revealObjects[id];
@@ -112,9 +108,14 @@ module.exports = function(params) {
         revealCurses: updateRevealGen('curses'),
         revealDothis: updateRevealGen('dothis'),
         revealResourcesNetwork: function(){
-          updateReveal('moneyArms',Math.min(1,Math.max(0,this.val*4)));
-          updateReveal('moneyBills',Math.min(1,Math.max(0,this.val*4 -0.1)));
-          updateReveal('network',Math.min(1,Math.max(0,this.val*4 -2)));
+          objects.revealObjects.moneyArms.material.uniforms.revealed.value = Math.min(1,Math.max(0,this.val*4));
+          objects.revealObjects.moneyBills.material.uniforms.revealed.value = Math.min(1,Math.max(0,this.val*4 -0.1));
+          objects.revealObjects.network.material.uniforms.revealed.value = Math.min(1,Math.max(0,this.val*4 -2));
+
+          objects.revealObjects.moneyArms.visible = this.val <= 1;
+          objects.revealObjects.moneyBills.visible = this.val <= 1;
+          objects.revealObjects.network.visible = this.val <= 1;
+
         }
 
 

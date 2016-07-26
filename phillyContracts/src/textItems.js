@@ -7,7 +7,9 @@ var extend = require('./neilviz/util/extend');
 
 
 var model = require('./model');
+var config = require('./config');
 var layoutStates = require('./layoutStates');
+var layoutStatesPop = require('./layoutStatesPop');
 var cats = model.cats;
 var depts = model.depts;
 
@@ -155,25 +157,62 @@ layoutStates.contractNonContract.focis.forEach(contractNonFunction);
 layoutStates.contractProcurement.focis.forEach(contractProcurementFunction);
 
 
+//races
+var paramsPop = {};
+layoutStatesPop.byRace.focis.forEach(function(foci){
+  var race = model.phillyRaces[foci.rid];
+  paramsPop['race_' + race.id] = {
+      items: [{ text: race.n }],
+      color: 0x000000,
+      x: config.popDotsPos[0] + foci.x,
+      y: config.popDotsPos[1] - 110,
+      fontSize: 18,
+    //  opacity: 0.55
+    };
+});
+
+
+paramsPop.female = {
+    items: [{ text: 'Female' }],
+    color: 0x000000,
+    x: config.popDotsPos[0] - 310,
+    y: config.popDotsPos[1],
+    fontSize: 18,
+  //  opacity: 0.55
+  };
+paramsPop.male = {
+    items: [{ text: 'Male' }],
+    color: 0x000000,
+    x: config.popDotsPos[0] - 310,
+    y: config.popDotsPos[1] + 180,
+    fontSize: 18,
+  //  opacity: 0.55
+  };
+
+
 
 
 var keys = Object.keys(params);
+var keysPop = Object.keys(paramsPop);
 var allPromises = [];
 
 
-function getObjects() {
+function getObjects(pop) {
 
-    if (objects !== null)
-        return objects;
+    //if (objects !== null)
+    //    return objects;
 
     objects = {};
-    keys.forEach(function(key) {
-        params[key].textures = textures;
-        objects[key] = new BufferedTextSDF(params[key]);
+
+    var ks = pop ? keysPop : keys;
+    var ps = pop ? paramsPop : params;
+    ks.forEach(function(key) {
+        ps[key].textures = textures;
+        objects[key] = new BufferedTextSDF(ps[key]);
         objects[key].visible = false;
         objects[key].material.uniforms.opacity.value = 0;
-        objects[key].opFactor = params[key].opacity || 1;
-        objects[key].position.set(params[key].x || 0, params[key].y || 0, 6);
+        objects[key].opFactor = ps[key].opacity || 1;
+        objects[key].position.set(ps[key].x || 0, ps[key].y || 0, 6);
         allPromises.push(objects[key].loadedPromise);
     });
 
@@ -183,6 +222,8 @@ function getObjects() {
 //start out w zero opacity
 
 // Contract v nonContractTotal
+
+
 
 
 

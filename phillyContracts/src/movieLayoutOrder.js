@@ -15,6 +15,7 @@ module.exports = {
     pop: [
       'wholeCity',
       'byRace',
-      'byRaceGender'
+      'byRaceGender',
+      'whiteMale'
     ]
 };

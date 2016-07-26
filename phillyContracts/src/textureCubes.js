@@ -24,6 +24,7 @@ var urlSets = {
   nurseBloodPressure: texture6("photo_nurseBloodPressure.jpg"),
   procurementItems: texture6("photo-paper-sandwiches.jpg"),
   constructionPlan: texture6("photo-construction-plan.jpg"),
+  people: texture6("photo-people.jpg"),
 
 };
 

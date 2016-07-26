@@ -3,5 +3,6 @@ module.exports = [
   'nurseBloodPressure',
   'philly',
   'procurementItems',
-  'constructionPlan'
+  'constructionPlan',
+  'people'
 ];

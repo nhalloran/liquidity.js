@@ -32,17 +32,17 @@ var config = require('./config');
 
 //only during capture mode
 if (config.capture) {
-  var CCapture = require('ccapture.js');
-  var capturer = new CCapture({
-    verbose: false,
-    display: true,
-    framerate: config.captureFPS,
-    motionBlurFrames: 1,
-    quality: 100,
-    format: 'webm', //'jpg',
-    //  timeLimit: 5,
-    //  onProgress: function( p ) { progress.style.width = ( p * 100 ) + '%' }
-  });
+    var CCapture = require('ccapture.js');
+    var capturer = new CCapture({
+        verbose: false,
+        display: true,
+        framerate: config.captureFPS,
+        motionBlurFrames: 1,
+        quality: 100,
+        format: 'webm', //'jpg',
+        //  timeLimit: 5,
+        //  onProgress: function( p ) { progress.style.width = ( p * 100 ) + '%' }
+    });
 }
 
 //replace these
@@ -73,75 +73,76 @@ var showMetaBalls = config.showMetaBalls;
 
 
 var force = {
-  tick: function() {}
+    tick: function() {}
 };
 
 
 function init() {
 
-  backdrop = backdrop();
+    backdrop = backdrop();
 
 
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
-  camera.position.set(movieStates.initial.camX, movieStates.initial.camY, movieStates.initial.camZ);
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, -1);
+    camera.position.set(movieStates.initial.camX, movieStates.initial.camY, movieStates.initial.camZ);
 
-  var textObjects = textItems.getObjects();
-
-
-  audioEl = document.getElementById('narration');
+    var textObjects = textItems.getObjects();
+    var textObjectsPop = textItems.getObjects(true);
 
 
-  scene = new THREE.Scene();
-
-  //var directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
-  //directionalLight.position.set(0.3, -1, 2);
-  //scene.add(directionalLight);
-
-  var pointLight = new THREE.PointLight(0xffffff,config.lightIFactor,5000);
-  if(config.showMetaBalls && config.showShadows){
-    pointLight.castShadow = true;
-    pointLight.shadow.camera.near = 1;
-    pointLight.shadow.camera.far = 30;
-       pointLight.shadowCameraVisible = true;
-    pointLight.shadow.bias = 0.01;
-
-  }
-
-  pointLight.position.z = 1500;
-  scene.add(pointLight);
-  var ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
-  //scene.add(ambientLight);
+    audioEl = document.getElementById('narration');
 
 
+    scene = new THREE.Scene();
 
+    //var directionalLight = new THREE.DirectionalLight(0xffffff, 0.2);
+    //directionalLight.position.set(0.3, -1, 2);
+    //scene.add(directionalLight);
 
-  scene.add(backdrop);
+    var pointLight = new THREE.PointLight(0xffffff, config.lightIFactor, 5000);
+    if (config.showMetaBalls && config.showShadows) {
+        pointLight.castShadow = true;
+        pointLight.shadow.camera.near = 1;
+        pointLight.shadow.camera.far = 30;
+        pointLight.shadowCameraVisible = true;
+        pointLight.shadow.bias = 0.01;
+
+    }
+
+    pointLight.position.z = 1500;
+    scene.add(pointLight);
+    var ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+    //scene.add(ambientLight);
 
 
 
-  revDots = liquidDots.build({
-    nodes:nodes,
-    width: 960,
-    height: 500,
-    dotRadius: config.dotRadius
-  });
 
-  if (showCircles)
-    scene.add(revDots);
+    scene.add(backdrop);
 
-  popDots = liquidDots.build({
-      nodes:popNodes,
-      width: 960,
-      height: 500,
-      dotRadius: config.dotRadius
+
+
+    revDots = liquidDots.build({
+        nodes: nodes,
+        width: 960,
+        height: 500,
+        dotRadius: config.dotRadius
     });
 
-    popDots.position.x = config.popDotsPos[0];
-    popDots.position.y = config.popDotsPos[1];
+    if (showCircles)
+        scene.add(revDots);
 
-    if (showCircles){
-      scene.add(revDots);
-      scene.add(popDots);
+    popDots = liquidDots.build({
+        nodes: popNodes,
+        width: 960,
+        height: 500,
+        dotRadius: config.dotRadius
+    });
+
+    //popDots.position.x = config.popDotsPos[0];
+    //popDots.position.y = config.popDotsPos[1];
+
+    if (showCircles) {
+        scene.add(revDots);
+        scene.add(popDots);
     }
     objects.revDots = revDots;
     objects.popDots = popDots;
@@ -155,158 +156,175 @@ function init() {
 
 
 
-  var revealObjects = reveals.makeObjects(textures);
-  objects.revealObjects = revealObjects;
-  Object.keys(revealObjects).forEach(function(key){scene.add(revealObjects[key]);});
+    var revealObjects = reveals.makeObjects(textures);
+    objects.revealObjects = revealObjects;
+    Object.keys(revealObjects).forEach(function(key) { scene.add(revealObjects[key]); });
 
 
 
-  if (showMetaBalls){
-    metaballs = metaballs.build();
-    scene.add(metaballs);
-    //for debugging
-  }
-
-
-
-
+    if (showMetaBalls) {
+        metaballs = metaballs.build();
+        scene.add(metaballs);
+        //for debugging
+    }
 
 
 
 
-  Object.keys(textObjects).forEach(function(key) {
-    textObjects[key].position.z = 3;
-    scene.add(textObjects[key]);
-    textObjects[key].updateMatrix();
-  });
 
 
 
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  //  renderer.autoClear = false;
-
-  renderer.gammaInput = true;
-  renderer.gammaOutput = true;
-  renderer.physicallyBasedShading = true;
-  if (config.capture) {
-    renderer.setPixelRatio(1);
-    renderer.setSize(config.captureWidth, config.captureHeight);
-    camera.aspect = config.captureWidth / config.captureHeight;
-    camera.updateProjectionMatrix();
-
-  } else {
-    renderer.setPixelRatio(1);//window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-  }
-
-  if (config.showMetaBalls && config.showShadows) {
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap; //THREE.BasicShadowMap;
-  }
-
-  renderer.setClearColor(0xffffff, 1);
-
-  var stageEl = document.getElementById('stage');
-  stageEl.appendChild(renderer.domElement);
-  //
-  if (!config.capture) window.addEventListener('resize', onWindowResize, false);
-
-
-  var layoutTransitionsRev = layoutTransitions({
-    textObjects: textObjects,
-    showCircles: showCircles,
-    nodes: nodes,
-    camera: camera,
-    clock: clock,
-    dots: revDots,
-    layoutStates:layoutStates,
-    movieLayoutOrder: movieLayoutOrder.rev
-  });
-
-  var layoutTransitionsPop = layoutTransitions({
-    textObjects: {},
-    showCircles: {},
-    nodes: popNodes,
-    camera: camera,
-    clock: clock,
-    dots: popDots,
-    layoutStates:layoutStatesPop,
-    movieLayoutOrder: movieLayoutOrder.pop
-  });
-
-  // movie init
-  // should setup objects object before layoutTransitions
-  objects.camera = camera;
-  objects.metaballs = metaballs;
-  objects.pointLight = pointLight;
-  objects.backdrop = backdrop;
-  if (config.movie){
-    movieUpdates = movieUpdates({
-      layoutTransitionsRev: layoutTransitionsRev ,
-      layoutTransitionsPop: layoutTransitionsPop ,
-      objects: objects
+    Object.keys(textObjects).forEach(function(key) {
+        textObjects[key].position.z = 3;
+        scene.add(textObjects[key]);
+        textObjects[key].updateMatrix();
     });
-    movieTweens.init({
-      movieUpdates: movieUpdates,
-      revDots: revDots,
-      popDots: popDots
+    Object.keys(textObjectsPop).forEach(function(key) {
+        textObjectsPop[key].position.z = 3;
+        scene.add(textObjectsPop[key]);
+        textObjectsPop[key].updateMatrix();
     });
 
-  }
-
-
-  if (config.movie){
-    layoutTransitionsRev.gotoMovieState(0);
-    layoutTransitionsPop.gotoMovieState(0);
-  }
-  //else
-  //  layoutTransitions.gotoState('wholeCity');
-
-  //force.friction(0);
 
 
 
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    //  renderer.autoClear = false;
+
+    renderer.gammaInput = true;
+    renderer.gammaOutput = true;
+    renderer.physicallyBasedShading = true;
+    if (config.capture) {
+        renderer.setPixelRatio(1);
+        renderer.setSize(config.captureWidth, config.captureHeight);
+        camera.aspect = config.captureWidth / config.captureHeight;
+        camera.updateProjectionMatrix();
+
+    } else {
+        renderer.setPixelRatio(1); //window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    if (config.showMetaBalls && config.showShadows) {
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; //THREE.BasicShadowMap;
+    }
+
+    renderer.setClearColor(0xffffff, 1);
+
+    var stageEl = document.getElementById('stage');
+    stageEl.appendChild(renderer.domElement);
+    //
+    if (!config.capture) window.addEventListener('resize', onWindowResize, false);
+
+
+    var layoutTransitionsRev = layoutTransitions({
+        textObjects: textObjects,
+        showCircles: showCircles,
+        nodes: nodes,
+        camera: camera,
+        clock: clock,
+        dots: revDots,
+        layoutStates: layoutStates,
+        movieLayoutOrder: movieLayoutOrder.rev
+    });
+
+    var layoutTransitionsPop = layoutTransitions({
+        textObjects: textObjectsPop,
+        showCircles: {},
+        nodes: popNodes,
+        camera: camera,
+        clock: clock,
+        dots: popDots,
+        layoutStates: layoutStatesPop,
+        movieLayoutOrder: movieLayoutOrder.pop
+    });
+
+    // movie init
+    // should setup objects object before layoutTransitions
+    objects.camera = camera;
+    objects.metaballs = metaballs;
+    objects.pointLight = pointLight;
+    objects.backdrop = backdrop;
+    if (config.movie) {
+        movieUpdates = movieUpdates({
+            layoutTransitionsRev: layoutTransitionsRev,
+            layoutTransitionsPop: layoutTransitionsPop,
+            objects: objects
+        });
+        movieTweens.init({
+            movieUpdates: movieUpdates,
+            revDots: revDots,
+            popDots: popDots
+        });
+
+    }
+
+
+    if (config.movie) {
+        layoutTransitionsRev.gotoMovieState(0);
+        layoutTransitionsPop.gotoMovieState(0);
+    }
+    //else
+    //  layoutTransitions.gotoState('wholeCity');
+
+    //force.friction(0);
 
 
 
 
-//  renderer.domElement.onclick = function() {
-//    layoutTransitions.nextState();
-//  };
-
-  //for camera positioning
-  window._cp = camera.position;
-  window._cr = camera.rotation;
-  window.objects = objects;
-  window.TWEEN = TWEEN;
 
 
-  var urlVars =  getUrlVars();
-  if (urlVars.goto) audioEl.currentTime = Number(urlVars.goto);
+
+    //  renderer.domElement.onclick = function() {
+    //    layoutTransitions.nextState();
+    //  };
+
+    //for camera positioning
+    window._cp = camera.position;
+    window._cr = camera.rotation;
+    window.objects = objects;
+    window.TWEEN = TWEEN;
+
+
+    var urlVars = getUrlVars();
+    if (urlVars.goto) audioEl.currentTime = Number(urlVars.goto);
 
 }
 
 
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+function metaBallUpdate() {
+    if (showMetaBalls && metaballs.visible) {
+        var nodeSets = [];
+        if (revDots.visible) nodeSets.push(nodes);
+        if (popDots.visible) nodeSets.push(popNodes);
+        metaballs.update(nodeSets);
+
+    }
+
+
+}
 
 function animate() {
-  requestAnimationFrame(animate);
-  if (config.movie)
-    movieTweens.update(audioEl.currentTime);
-  else
-    TWEEN.update(clock.getElapsedTime() * 1000);
+    requestAnimationFrame(animate);
+    if (config.movie)
+        movieTweens.update(audioEl.currentTime);
+    else
+        TWEEN.update(clock.getElapsedTime() * 1000);
 
-  if (showMetaBalls && metaballs.visible)
-    metaballs.update(nodes);
-  renderer.render(scene, camera);
+    metaBallUpdate();
+
+
+    renderer.render(scene, camera);
 
 }
 
@@ -314,30 +332,30 @@ function captureFrames() {
     var frameDur = 1 / config.captureFPS;
     var f = 0;
     capturer.start();
-    function nextFrame(){
+
+    function nextFrame() {
         time = f * frameDur;
         f++;
-        if (time < config.captureDuration){
-          movieTweens.update(time);
+        if (time < config.captureDuration) {
+            movieTweens.update(time);
 
-          if (showMetaBalls && metaballs.visible) metaballs.update(nodes);
+            metaBallUpdate();
 
-          renderer.render(scene, camera);
-          capturer.capture(renderer.domElement);
-          requestAnimationFrame(nextFrame);
+            renderer.render(scene, camera);
+            capturer.capture(renderer.domElement);
+            requestAnimationFrame(nextFrame);
+        } else {
+            capturer.stop();
+            capturer.save();
+
         }
-        else{
-          capturer.stop();
-          capturer.save();
-
-        }
-      }
-      nextFrame();
+    }
+    nextFrame();
 
 }
 
 module.exports = {
-  init: init,
-  animate: animate,
-  captureFrames: captureFrames
+    init: init,
+    animate: animate,
+    captureFrames: captureFrames
 };
