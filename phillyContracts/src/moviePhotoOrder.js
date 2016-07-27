@@ -4,5 +4,6 @@ module.exports = [
   'philly',
   'procurementItems',
   'constructionPlan',
-  'people'
+  'people',
+  'philly',
 ];

@@ -2,6 +2,8 @@ var THREE = require('three');
 var cats = require('./data/cats');
 var depts = require('./data/depts');
 var initialPositions = require('./data/initialPositions');
+var RandomArray = require('./neilviz/RandomArray');
+var initialPositionsPop = require('./data/initialPositionsPop');
 var config = require('./config');
 var phillyDemographics = require('./data/phillyDemographics.js');
 var budget = require('dsv!./data/phillyBudget2015.csv');
@@ -164,8 +166,8 @@ var raceCounts = phillyDemographics.races.map(function(race){
   return Math.round(race.p / 100 * popDotCount);
 });
 
-function getNextRace(){
-  for (var i = Math.floor(Math.random() * raceCounts.length), j = 0; j < raceCounts.length; i++, j++){
+function getNextRace(rand){
+  for (var i = Math.floor(rand * raceCounts.length), j = 0; j < raceCounts.length; i++, j++){
     if(raceCounts[i%raceCounts.length] >=0){
       raceCounts[i%raceCounts.length] --;
       return i%raceCounts.length;
@@ -178,14 +180,16 @@ function getNextRace(){
 
 var popNodes = [];
 
+var rand;
+
 for (var i = 0; i < popDotCount; i++){
   popNodes.push({
-    x: 0,
-    y: 0,
+    x: initialPositionsPop[i][0],
+    y: initialPositionsPop[i][1],
     z: 0,
     color: {r:0,g:0,b:0},
-    rid: getNextRace(),
-    gender: (Math.random() > 0.5) ? 'm' : 'f'
+    rid: getNextRace(RandomArray[i % RandomArray.length]),
+    gender: (RandomArray[(i*7 + 1) % RandomArray.length] > 0.5) ? 'm' : 'f'
   });
 }
 

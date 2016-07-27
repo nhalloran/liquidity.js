@@ -242,6 +242,8 @@ function init() {
         movieLayoutOrder: movieLayoutOrder.pop
     });
 
+    window.layoutTransitionsPop = layoutTransitionsPop;
+
     // movie init
     // should setup objects object before layoutTransitions
     objects.camera = camera;
@@ -307,7 +309,7 @@ function metaBallUpdate() {
         var nodeSets = [];
         if (revDots.visible) nodeSets.push(nodes);
         if (popDots.visible) nodeSets.push(popNodes);
-        metaballs.update(nodeSets);
+        metaballs.update(nodeSets, camera);
 
     }
 

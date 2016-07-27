@@ -334,8 +334,49 @@ movieTweens.init = function(params) {
         camTween(states.whiteMale, POP_WHITE_MALE_DUR * 0.2).easing(InOut)
         .delay(POP_WHITE_MALE_START),
 
-        simpleTween(states.whiteMaleRev, 'revOpacity', 0)
+
+
+
+        camTween(states.backToRev, REV_WHITE_MALE_DUR * 0.15).easing(InOut)
         .delay(REV_WHITE_MALE_START),
+        camTween(states.whiteMaleRev, REV_WHITE_MALE_DUR * 0.3).easing(InOut)
+        .delay(REV_WHITE_MALE_START + REV_WHITE_MALE_DUR * 0.3),
+
+        simpleTween(states.backToRev, 'revOpacity', 0)
+        .delay(REV_WHITE_MALE_START),
+        //simpleTween(states.backToRev, 'layout', 500)
+        //.delay(REV_WHITE_MALE_START + REV_WHITE_MALE_DUR * 0.4),
+        simpleTween(states.whiteMaleRev, 'layout', 1000)
+        .delay(REV_WHITE_MALE_START + REV_WHITE_MALE_DUR * 0.4) ,
+
+        simpleTween(states.cityGoal, 'revealDashedCircle', 1000)
+        .delay(CITY_GOAL_START) ,
+
+        simpleTween(states.cityGoal, 'layout', 200)
+        .delay(CITY_GOAL_START + 1000 + 1000) ,
+
+        simpleTween(states.cityGoalBack, 'layout', 200)
+        .delay(CITY_GOAL_START + CITY_GOAL_DUR * 0.9) ,
+        simpleTween(states.cityGoalBack, 'revealDashedCircle', 500)
+        .delay(CITY_GOAL_START + CITY_GOAL_DUR * 0.9) ,
+
+        //closing
+        simpleTween(states.closingDepts, 'layout', CLOSING_DEPTS_DUR * 0.3)
+        .delay(CLOSING_DEPTS_START) ,
+        camTween(states.closingDepts, CLOSING_DEPTS_DUR * 0.6)
+        .delay(CLOSING_DEPTS_START) ,
+        simpleTween(states.closingDepts, 'reflect', 500)
+        .delay(CLOSING_DEPTS_START + CLOSING_DEPTS_DUR * 0.6) ,
+        simpleTween(states.closingWhole, 'reflectPhoto', 0)
+        .delay(CLOSING_DEPTS_START + CLOSING_DEPTS_DUR * 0.6 + 500) ,
+        simpleTween(states.closingWhole, 'reflect', 500)
+        .delay(CLOSING_DEPTS_START + CLOSING_DEPTS_DUR * 0.6 + 500) ,
+
+        simpleTween(states.closingWhole, 'layout', CLOSING_WHOLE_DUR * 0.5)
+        .delay(CLOSING_WHOLE_START) ,
+        camTween(states.closingWhole, CLOSING_WHOLE_DUR)
+        .delay(CLOSING_WHOLE_START) ,
+
 
 
 

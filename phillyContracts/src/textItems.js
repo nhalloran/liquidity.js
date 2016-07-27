@@ -164,8 +164,8 @@ layoutStatesPop.byRace.focis.forEach(function(foci){
   paramsPop['race_' + race.id] = {
       items: [{ text: race.n }],
       color: 0x000000,
-      x: config.popDotsPos[0] + foci.x,
-      y: config.popDotsPos[1] - 110,
+      x: foci.x,
+      y: foci.y - 110,
       fontSize: 18,
     //  opacity: 0.55
     };
@@ -187,6 +187,52 @@ paramsPop.male = {
     y: config.popDotsPos[1] + 180,
     fontSize: 18,
   //  opacity: 0.55
+  };
+paramsPop.whiteMales = {
+    items: [{ text: 'White Males' }],
+    color: 0x000000,
+    x: layoutStatesPop.whiteMale.m0.x,
+    y: layoutStatesPop.whiteMale.m0.y - 125,
+    fontSize: 18,
+  //  opacity: 0.55
+  };
+paramsPop.everyoneElse = {
+    items: [{ text: 'Everyone Else' }],
+    color: 0x000000,
+    x: layoutStatesPop.whiteMale.m0.x + 250,
+    y: layoutStatesPop.whiteMale.m0.y - 125,
+    fontSize: 18,
+  //  opacity: 0.55
+  };
+
+
+params.racePopulation = {
+    items: [{ text: 'City Population' }],
+    color: 0x000000,
+    x: layoutStatesPop.whiteMale.m0.x - 220,
+    y: layoutStatesPop.whiteMale.m0.y,
+    fontSize: 18,
+    align: 'right'
+  //  opacity: 0.55
+  };
+params.raceDollars = {
+    items: [{ text: 'Contract Dollars' }],
+    color: 0x000000,
+    x: layoutStatesPop.whiteMale.m0.x - 220,
+    y: layoutStatesPop.whiteMale.m0.y + 220,
+    fontSize: 18,
+    align: 'right'
+
+  //  opacity: 0.55
+  };
+params.raceDollarsSub = {
+    items: [{ text: 'Business Owner' }],
+    color: 0x000000,
+    x: layoutStatesPop.whiteMale.m0.x - 220,
+    y: layoutStatesPop.whiteMale.m0.y + 220 - 22,
+    fontSize: 16,
+    align: 'right',
+    opacity: 0.55
   };
 
 

@@ -1,5 +1,6 @@
 var model = require('./model');
 var extend = require('./neilviz/util/extend');
+var layoutStatesPop = require('./layoutStatesPop');
 
 var radiusSquared = model.radiusSquared;
 var radius = model.radius;
@@ -285,19 +286,19 @@ states.behavioralHealthPhoto.nodes = states.behavioralHealthPhoto.nodes.map(func
 
 //by department, contracts colored
 
-states.contractNonContract = function() {
+var contractNonContract = function(cPos) {
     var cFoci = {
-        y: 0,
-        x: 180,
+        y: cPos.y,
+        x: cPos.x,
         distSq: radiusSquared(model.contractTotal),
-        reflect:1
+        reflect: 1
     };
 
     var nFoci = {
         y: 0,
         x: -180,
         distSq: radiusSquared(model.nonContractTotal),
-        reflect:1
+        reflect: 1
 
     };
 
@@ -314,7 +315,9 @@ states.contractNonContract = function() {
 
     return state;
 
-}();
+};
+
+states.contractNonContract = contractNonContract({ x: 180, y: 0 });
 
 states.contractProcurement = function() {
     var cFoci = {
@@ -379,6 +382,51 @@ states.contractProfessional.nodes = states.contractProfessional.nodes.map(functi
     var fi = states.contractProcurement.focis.indexOf(node.foci);
     return extend({}, node, { foci: states.contractProfessional.focis[fi] });
 });
+
+
+states.contractBeforeRace = contractNonContract({ x: 200, y: -380 });
+
+
+var whiteMales = function(ratio) {
+    var state = extend({}, states.contractBeforeRace);
+    var cFoci = state.focis[0];
+    var nFoci = state.focis[1];
+    var m0 = layoutStatesPop.whiteMale.m0;
+    var wmFoci = {
+        x: m0.x,
+        y: m0.y + 220,
+        distSq: radiusSquared(model.contractTotal * ratio),
+        reflect: 0
+    };
+    var eeFoci = {
+        x: m0.x + 250,
+        y: m0.y + 220,
+        distSq: radiusSquared(model.contractTotal * (1-ratio)),
+        reflect: 0
+    };
+    state.focis = [nFoci, wmFoci, eeFoci];
+    var eeCount = Math.round(model.contractTotal * (1-ratio) / model.dotValue);
+    state.nodes = state.nodes.map(function(node) {
+        if (node.foci === cFoci) {
+            eeCount--;
+            var foci = (eeCount > 0) ? eeFoci : wmFoci;
+            return extend({}, node, { foci: foci });
+        } else {
+            return node;
+        }
+    });
+
+    state.text = ['racePopulation', 'raceDollars', 'raceDollarsSub'];
+    state.eeFoci = eeFoci;
+
+    return state;
+
+};
+
+states.whiteMales = whiteMales(0.7);
+states.whiteMalesGoal = whiteMales(0.6);
+
+
 
 
 

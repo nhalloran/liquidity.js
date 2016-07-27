@@ -178,6 +178,15 @@ var params = {
         revealMapUrl: '/textures/draw-circle-s6-reveal.png',
         color: 0xff0000
     },
+    dashedCircle: {
+        x: layoutStates.whiteMales.eeFoci.x,
+        y: layoutStates.whiteMales.eeFoci.y,
+        width: 155, //2800X3155
+        height: 155,
+        mapUrl: '/textures/draw-dashed-circle-fill.png',
+        revealMapUrl: '/textures/draw-dashed-circle-reveal.png',
+        color: 0x019f22
+    },
 };
 
 var keys = Object.keys(params);

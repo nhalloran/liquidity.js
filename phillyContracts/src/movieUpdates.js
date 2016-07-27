@@ -107,6 +107,7 @@ module.exports = function(params) {
         revealBulbs: updateRevealGen('bulbs'),
         revealCurses: updateRevealGen('curses'),
         revealDothis: updateRevealGen('dothis'),
+        revealDashedCircle: updateRevealGen('dashedCircle'),
         revealResourcesNetwork: function(){
           objects.revealObjects.moneyArms.material.uniforms.revealed.value = Math.min(1,Math.max(0,this.val*4));
           objects.revealObjects.moneyBills.material.uniforms.revealed.value = Math.min(1,Math.max(0,this.val*4 -0.1));

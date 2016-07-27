@@ -19,11 +19,15 @@ var durations = [
     { n: 'PRESCRIPT', t: 9000 },
     { n: 'RESOURSES', t: 9000 },
     { n: 'PRE_POP', t: 3000 },
-    { n: 'POP_TOTAL', t: 8000 },
-    { n: 'POP_RACE', t: 8000 },
-    { n: 'POP_GENDER', t: 8000 },
-    { n: 'POP_WHITE_MALE', t: 8000 },
-    { n: 'REV_WHITE_MALE', t: 8000 }
+    { n: 'POP_TOTAL', t: 6000 },
+    { n: 'POP_RACE', t: 3200 },
+    { n: 'POP_GENDER', t: 4000 },
+    { n: 'POP_WHITE_MALE', t: 4500 },
+    { n: 'REV_WHITE_MALE', t: 20000 },
+    { n: 'CITY_GOAL', t: 12000 },
+    { n: 'PRE_CLOSING', t: 3000 },
+    { n: 'CLOSING_DEPTS', t: 7000 },
+    { n: 'CLOSING_WHOLE', t: 20000 }
 ];
 
 var consts = {

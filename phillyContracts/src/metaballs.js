@@ -32,35 +32,41 @@ function build() {
 
     var effect = new MarchingCubes(resolution, material, true, true, config.colorCanvasRez);
 
-    var scaleFix = 2000;
-    var posFix = {
-        x: 0.5,
-        y: 0.5,
-        z: 0.5
-    };
 
-    effect.position.set(-posFix.x, -posFix.y, -posFix.z);
-    effect.scale.set(scaleFix / 2, scaleFix / 2, scaleFix / 2 * 0.05);
 
     //effect.enableUvs = false;
 
 
-    effect.update = function(nodeSets) {
+    effect.update = function(nodeSets, camera) {
 
         effect.reset();
 
+        var scaleFix = camera.position.z * 3;
+        var posFix = {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5
+        };
+
+        effect.position.set(camera.position.x, camera.position.y, -posFix.z);
+        effect.scale.set(scaleFix / 2, scaleFix / 2, scaleFix / 2 * 0.05);
+
         // fill the field with some metaballs
+
+        //this.scale.x = 0.5;
+        //this.scale.y = 0.5;
+
 
         var i, ballx, bally, ballz, subtract, strength;
 
         //subtract = 12;
-        subtract = 40;
-        strength = 0.13 * 0.1 * 1.2 / ((Math.sqrt(nodeSets[0].length) - 1) / 4 + 1);
+        subtract = 40 *scaleFix / 2000;
+        strength = 0.13 * 0.12 /scaleFix * 2000 / ((Math.sqrt(nodeSets[0].length) - 1) / 4 + 1);
 
         for (var ns = 0; ns < nodeSets.length; ns++){
           for (i = 0; i < nodeSets[ns].length; i++) {
             var node = nodeSets[ns][i];
-            effect.addBall((node.x - this.position.x) / scaleFix + posFix.x , (node.y- this.position.y) / scaleFix + posFix.y, posFix.z, strength, subtract, node.color, node.reflect);
+            effect.addBall((node.x - effect.position.x) / scaleFix + posFix.x , (node.y- effect.position.y) / scaleFix + posFix.y, posFix.z, strength, subtract, node.color, node.reflect);
           }
         }
 

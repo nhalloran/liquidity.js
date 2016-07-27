@@ -95,7 +95,7 @@ states.byRace = function() {
 
     // state
 
-    var x = -300;
+    var x = config.popDotsPos[0] -300;
     var r = 0, prevR = 0;
     var focisById = {};
 
@@ -105,7 +105,7 @@ states.byRace = function() {
         prevR = r;
         return {
           x: x,
-          y: 0,
+          y: config.popDotsPos[1],
           //distSq: radiusSquared(model.totalBudget), // uses rev as
           distSq: radiusSquaredPop(race.p), // uses rev as
           reflect: 1,
@@ -191,7 +191,8 @@ states.whiteMale = function() {
   return {
       focis: focis,
       nodes: nodes,
-      text: [],
+      text: ['whiteMales', 'everyoneElse'],
+      m0: m0
   };
 
 }();

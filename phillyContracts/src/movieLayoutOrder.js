@@ -10,7 +10,14 @@ module.exports = {
         'behavioralHealthPhoto',
         'contractNonContract',
         'contractProcurement',
-        'contractProfessional'
+        'contractProfessional',
+        'whiteMales',
+        'whiteMalesGoal',
+        'whiteMales',
+        'deptByCatByContract',
+        'wholeCityNoText',
+
+
     ],
     pop: [
       'wholeCity',

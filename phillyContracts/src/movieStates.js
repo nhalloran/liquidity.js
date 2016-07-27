@@ -30,7 +30,8 @@ var statesArray = [{
         revealBulbs: 0,
         revealCurses: 0,
         revealDothis:0,
-        revealResourcesNetwork:0
+        revealResourcesNetwork:0,
+        revealDashedCircle:0
 
     },
     {
@@ -255,8 +256,38 @@ var statesArray = [{
       revOpacity:1,
       camY: 0,
 
+
   }, {
       id: 'whiteMaleRev',
+      camX: 150,
+      camY: -490,
+      camZ: 420,
+      layout: 11,
+  }, {
+      id: 'cityGoal',
+      revealDashedCircle: 1,
+      layout: 12,
+  }, {
+      id: 'cityGoalBack',
+      revealDashedCircle: 2,
+      layout: 13,
+  }, {
+      id: 'closingDepts',
+      layout: 14,
+      camX: layoutStates.deptByCat.camPos.x,
+      camY: layoutStates.deptByCat.camPos.y,
+      camZ: layoutStates.deptByCat.camPos.z,
+      reflect:0,
+
+  }, {
+      id: 'closingWhole',
+      layout: 15,
+      camX: 0,
+      camY: 0,
+      camZ: 100,
+      reflectPhoto:6,
+      reflect:1,
+
 
   },
 ];
